@@ -17,7 +17,7 @@ def caso(nav, lat, lng, aceptar):
     pg.on("dialog", lambda d: (dialogos.append(d.message), d.accept() if aceptar else d.dismiss()))
     pg.goto(URL); pg.wait_for_timeout(1500)
     ayuda_pruebas.ingresar(pg, "recolector", 2000)
-    pg.fill("#input-qr-manual", "ECO-SF-001"); pg.evaluate("validarIdentificadorQR('ECO-SF-001')")
+    pg.evaluate("mostrarPantalla('confirmar')"); pg.fill("#input-qr-manual", "ECO-SF-001"); pg.evaluate("validarIdentificadorQR('ECO-SF-001')")
     pg.fill("#input-pesaje-recolector", "10"); pg.evaluate("void confirmarRecoleccionEnTerritorio()"); pg.wait_for_timeout(1500)
     r = pg.evaluate("(() => { const e = estadoApp.ecopuntos.find(x => x.id === 'ECO-SF-001'); return [e.capacidad, e.ultimaGeocerca || null] })()")
     ctx.close(); return r, dialogos

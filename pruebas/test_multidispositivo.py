@@ -56,6 +56,7 @@ try:
 
         # 2. La autoridad despacha a la cuadrilla Móvil 03 (por defecto) y la cuadrilla es avisada
         A.wait_for_timeout(500)
+        A.evaluate("mostrarPantalla('rutas')"); A.wait_for_timeout(300)
         A.check(f'.chk-despacho-solicitud[value="{id1}"]'); A.click("#btn-optimizar-ruta")
         ok_parada = espera(C, f"document.getElementById('lista-paradas-recolector').innerText.includes('{id1}')")
         if not ok_parada:
@@ -71,18 +72,20 @@ try:
         # 3. Una parada para otra unidad no aparece en la cuadrilla Móvil 03
         id2 = pedir("E2E-PRUEBA dos")
         espera(A, f"estadoApp.solicitudes.some(x => x.id === '{id2}')"); A.wait_for_timeout(500)
+        A.evaluate("mostrarPantalla('rutas')"); A.wait_for_timeout(300)
         A.select_option("#select-cuadrilla", index=0)          # Móvil 01
         A.check(f'.chk-despacho-solicitud[value="{id2}"]'); A.click("#btn-optimizar-ruta")
         C.wait_for_timeout(3500)
         chk("La cuadrilla no ve paradas de otra unidad", id2 not in C.inner_text("#lista-paradas-recolector"))
 
         # 4. La cuadrilla confirma la recolección y todos lo ven
-        C.fill("#input-qr-manual", id1); C.evaluate(f"validarIdentificadorQR('{id1}')")
+        C.evaluate("mostrarPantalla('confirmar')"); C.fill("#input-qr-manual", id1); C.evaluate(f"validarIdentificadorQR('{id1}')")
         C.fill("#input-pesaje-recolector", "18"); C.evaluate("void confirmarRecoleccionEnTerritorio()")
         chk("Autoridad ve la solicitud recolectada", espera(A, f"estadoApp.solicitudes.find(x => x.id === '{id1}').estado === 'recolectado'"))
         chk("Vecino ve su solicitud recolectada", espera(V, f"estadoApp.solicitudes.find(x => x.id === '{id1}').estado === 'recolectado'"))
 
         # 5. Campaña de la autoridad llega a vecino y cuadrilla
+        A.evaluate("mostrarPantalla('campanas')"); A.wait_for_timeout(300)
         A.fill("#input-campana-titulo", "E2E-PRUEBA Jornada de limpieza"); A.fill("#input-campana-cuerpo", "Sábado en Plaza Cívica")
         A.evaluate("emitirCampanaMunicipal()")
         chk("Vecino recibe la campaña", espera(V, "estadoApp.campanas.some(c => c.titulo.includes('E2E-PRUEBA'))"))

@@ -242,7 +242,7 @@
       <div class="flex-1">
         <p id="toast-titulo" class="text-xs font-bold text-slate-800">Aviso Municipal</p>
         <p id="toast-mensaje" class="text-xs text-slate-600 mt-0.5">Mensaje informativo para la comunidad.</p>
-        <span class="text-[12px] text-slate-400 mt-1 block">Ahora • Residuos Urbanos San Francisco</span>
+        <span class="text-[12px] text-slate-400 mt-1 block">Ahora</span>
       </div>
       <button onclick="cerrarToast()" class="text-slate-400 hover:text-slate-600 text-xs" aria-label="Cerrar notificación">×</button>
     </div>
@@ -256,7 +256,7 @@
     <!-- ========================================================== -->
     <div id="vista-ciudadano" class="space-y-5 hidden">
       <!-- Bienvenida y accesos -->
-      <div id="seccion-inicio-vecino" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div id="seccion-inicio-vecino" data-pantalla="inicio" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
           <p class="antetitulo text-emerald-700">Ciudad limpia y sostenible</p>
           <h2 class="text-[28px] leading-[34px] font-bold text-slate-800 mt-1">Hola, <span id="saludo-nombre">vecino</span></h2>
@@ -288,9 +288,8 @@
       </div>
 
       <!-- Sección con Mapa de Ecopuntos y Solicitudes del Vecino -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <!-- Slot para el Mapa Territorial en Portal Vecino -->
-        <div id="slot-mapa-ciudadano" class="lg:col-span-2">
+        <div id="slot-mapa-ciudadano" data-pantalla="mapa">
           <!-- Mapa Territorial de Ecopuntos, Incidentes y Rutas en San Francisco -->
           <div id="seccion-mapa-vecino" class="w-full bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -324,9 +323,8 @@
         </div>
 
         <!-- Lista de Solicitudes y Avisos Municipales -->
-        <div class="space-y-4 flex flex-col">
           <!-- Mis Solicitudes -->
-          <div id="card-solicitudes-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex-1 flex flex-col">
+          <div id="card-solicitudes-vecino" data-pantalla="solicitudes" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col">
             <div class="flex items-center justify-between mb-2">
               <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
                 <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-600"></i>
@@ -334,13 +332,13 @@
               </h3>
               <span class="text-[12px] bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded-full" id="conteo-solicitudes">3 activas</span>
             </div>
-            <div class="space-y-2.5 overflow-y-auto max-h-[220px] custom-scroll pr-1" id="lista-solicitudes-vecino">
+            <div class="space-y-2.5" id="lista-solicitudes-vecino">
               <!-- Renderizado dinámico -->
             </div>
           </div>
 
           <!-- Campañas y Notificaciones de Reciclaje -->
-          <div id="card-campanas-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+          <div id="card-campanas-vecino" data-pantalla="avisos" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
             <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5 mb-2">
               <i data-lucide="megaphone" class="w-4 h-4 text-amber-500"></i>
               <span>Campañas y Alertas de Limpieza</span>
@@ -349,11 +347,9 @@
               <!-- Renderizado dinámico -->
             </div>
           </div>
-        </div>
-      </div>
 
       <!-- Estado de los contenedores (solo lectura para el vecino) -->
-      <div id="card-disponibilidad-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <div id="card-disponibilidad-vecino" data-pantalla="contenedores" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         <div class="flex items-center justify-between mb-3">
           <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
             <i data-lucide="recycle" class="w-4 h-4 text-emerald-600"></i>
@@ -365,7 +361,7 @@
       </div>
 
       <!-- Horarios de recolección domiciliaria por zona -->
-      <div id="card-horarios-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <div id="card-horarios-vecino" data-pantalla="horarios" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         <div class="flex items-center justify-between mb-3">
           <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
             <i data-lucide="calendar-clock" class="w-4 h-4 text-emerald-600"></i>
@@ -395,7 +391,7 @@
     <!-- ========================================================== -->
     <div id="vista-autoridad" class="space-y-5 hidden">
       <!-- Barra Superior de Métricas Municipales (KPIs) -->
-      <div id="seccion-kpis-muni" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div id="seccion-kpis-muni" data-pantalla="resumen" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div class="flex items-center justify-between text-xs text-slate-500">
             <span>Solicitudes Pendientes</span>
@@ -431,7 +427,7 @@
       </div>
 
       <!-- Planificación de Rutas y Mapa Territorial Municipal -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div data-pantalla="rutas" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <!-- Panel de Asignación y Optimización Inteligente de Rutas -->
         <div id="planificador-rutas-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
           <div class="flex items-center justify-between">
@@ -447,9 +443,9 @@
           <div class="space-y-2 border border-slate-200 rounded-xl p-3 bg-slate-50">
             <label class="text-sm font-bold text-slate-700 block">Cuadrilla</label>
             <select id="select-cuadrilla" class="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-sky-500">
-              <option value="Cuadrilla Norte - Móvil 01">Móvil 01 · Cincuentenario y Urquiza</option>
-              <option value="Cuadrilla Sur - Móvil 02">Móvil 02 · Sarmiento y Universidad</option>
-              <option value="Cuadrilla Especial - Móvil 03" selected>Móvil 03 · Voluminosos y peligrosos</option>
+              <option value="Cuadrilla Norte - Móvil 01">Móvil 01, Cincuentenario y Urquiza</option>
+              <option value="Cuadrilla Sur - Móvil 02">Móvil 02, Sarmiento y Universidad</option>
+              <option value="Cuadrilla Especial - Móvil 03" selected>Móvil 03, voluminosos y peligrosos</option>
             </select>
 
             <button id="btn-optimizar-ruta" onclick="optimizarRutaAutoridad()" class="w-full mt-2 bg-muni-600 hover:bg-muni-700 text-white font-semibold py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 transition shadow">
@@ -468,7 +464,7 @@
       </div>
 
       <!-- Consola de Monitoreo de Incidentes Urbanos -->
-      <div id="tabla-incidentes-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
+      <div id="tabla-incidentes-card" data-pantalla="incidentes" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
               <i data-lucide="layout-dashboard" class="w-4 h-4 text-muni-600"></i>
@@ -497,13 +493,15 @@
             </table>
           </div>
 
-          <!-- Difusión de campañas -->
-          <div id="card-campanas-muni" class="mt-4 pt-3 border-t border-slate-200">
-            <div class="flex items-center justify-between mb-2">
-              <h4 class="text-xs font-bold text-slate-700 flex items-center space-x-1">
-                <i data-lucide="send" class="w-3.5 h-3.5 text-muni-600"></i>
+        </div>
+
+        <!-- Difusión de campañas -->
+          <div id="card-campanas-muni" data-pantalla="campanas" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+                <i data-lucide="megaphone" class="w-4 h-4 text-muni-600"></i>
                 <span>Enviar un aviso a la comunidad</span>
-              </h4>
+              </h3>
             </div>
             <div class="flex flex-wrap sm:flex-nowrap gap-2">
               <input id="input-campana-titulo" type="text" placeholder="Título (ej: Alerta Descacharrado Dengue)" class="w-full sm:w-1/3 text-xs border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500">
@@ -514,12 +512,11 @@
               </button>
             </div>
           </div>
-        </div>
 
       <!-- ========================================================== -->
       <!-- SUPERVISIÓN DE CONTENEDORES Y NIVELES DE LLENADO EN VIVO   -->
       <!-- ========================================================== -->
-      <div id="panel-iot-card" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <div id="panel-iot-card" data-pantalla="contenedores" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
           <div>
             <div class="flex flex-wrap items-center gap-2">
@@ -617,7 +614,7 @@
     <!-- ========================================================== -->
     <div id="vista-recolector" class="space-y-5 hidden">
       <!-- Resumen operativo del turno -->
-      <div id="kpis-cuadrilla" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div id="kpis-cuadrilla" data-pantalla="resumen" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <span class="text-xs text-slate-500">Paradas Pendientes</span>
           <p id="kpi-cuad-paradas" class="text-2xl font-black text-slate-800 mt-1">0</p>
@@ -639,9 +636,9 @@
           <span class="text-[13px] text-emerald-700">registrados en el turno</span>
         </div>
       </div>
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div data-pantalla="resumen" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <p class="antetitulo text-orange-700">Móvil 03 · Cuadrilla especial</p>
+          <p class="antetitulo text-orange-700">Móvil 03, cuadrilla especial</p>
           <h2 class="text-[22px] leading-[30px] font-bold text-slate-800 mt-0.5">Hoja de ruta de hoy</h2>
         </div>
         <div class="flex flex-wrap items-center gap-2">
@@ -657,12 +654,12 @@
       </div>
 
       <!-- Rutas Asignadas y Detalle de Paradas con Mapa Territorial -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div data-pantalla="ruta" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div id="seccion-paradas-cuadrilla" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
               <i data-lucide="list-ordered" class="w-4 h-4 text-orange-600"></i>
-              <span>Paradas Asignadas Hoy</span>
+              <span>Paradas de hoy</span>
             </h3>
             <span class="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-0.5 rounded-full" id="conteo-paradas-recolector">4 restantes</span>
           </div>
@@ -676,7 +673,7 @@
       </div>
 
       <!-- Módulo de Confirmación Operativa y Escáner Rápido -->
-      <div id="card-confirmacion-cuadrilla" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+      <div id="card-confirmacion-cuadrilla" data-pantalla="confirmar" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
               <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
@@ -687,27 +684,21 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <h4 class="text-xs font-bold text-slate-700">1. Código del punto</h4>
+                <h4 class="text-sm font-bold text-slate-700">1. ¿Qué parada cerrás?</h4>
                 <div class="flex gap-2">
-                  <input id="input-qr-manual" type="text" placeholder="Ej: ECO-SF-001" class="flex-1 text-xs border border-slate-300 rounded-lg p-2 font-mono uppercase bg-white">
-                  <button onclick="validarIdentificadorQR(document.getElementById('input-qr-manual').value)" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-semibold">
-                    Validar
+                  <input id="input-qr-manual" type="text" placeholder="Código de la parada" aria-label="Código de la parada" class="flex-1 min-w-0 text-sm border border-slate-300 rounded-lg p-2 uppercase bg-white">
+                  <button onclick="validarIdentificadorQR(document.getElementById('input-qr-manual').value)" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm font-semibold">
+                    Buscar
                   </button>
                 </div>
-                <div class="flex flex-wrap gap-1.5 pt-1">
-                  <span class="text-[12px] text-slate-500">Accesos rápidos:</span>
-                  <button onclick="document.getElementById('input-qr-manual').value='ECO-SF-001'; validarIdentificadorQR('ECO-SF-001')" class="text-[12px] bg-white border border-slate-200 hover:bg-slate-100 px-1.5 py-0.5 rounded font-mono">ECO-SF-001 (Plaza Cívica)</button>
-                  <button onclick="document.getElementById('input-qr-manual').value='ECO-SF-004'; validarIdentificadorQR('ECO-SF-004')" class="text-[12px] bg-white border border-slate-200 hover:bg-slate-100 px-1.5 py-0.5 rounded font-mono">ECO-SF-004 (UTN FRSFCO)</button>
-                  <button onclick="document.getElementById('input-qr-manual').value='SOL-SF-102'; validarIdentificadorQR('SOL-SF-102')" class="text-[12px] bg-white border border-slate-200 hover:bg-slate-100 px-1.5 py-0.5 rounded font-mono">SOL-SF-102 (Voluminoso)</button>
-                </div>
-              </div>
+                <p class="text-[13px] text-slate-500">Elegí una parada en "Mi ruta", escaneá su código o escribilo.</p>              </div>
 
               <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <h4 class="text-xs font-bold text-slate-700">2. Peso y observaciones</h4>
+                <h4 class="text-sm font-bold text-slate-700">2. Peso y observaciones</h4>
                 <div class="flex gap-2 items-center">
-                  <input id="input-pesaje-recolector" type="number" min="0" step="0.5" placeholder="Peso en kg" class="w-32 text-xs border border-slate-300 rounded-lg p-2 bg-white">
+                  <input id="input-pesaje-recolector" type="number" min="0" step="0.5" placeholder="Peso en kg" aria-label="Peso en kilos" class="w-32 text-sm border border-slate-300 rounded-lg p-2 bg-white">
                 </div>
-                <textarea id="input-notas-recolector" rows="2" placeholder="Observaciones del retiro (ej: colocado en bolsas especiales)..." class="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white"></textarea>
+                <textarea id="input-notas-recolector" rows="2" placeholder="Observaciones del retiro (opcional)" aria-label="Observaciones" class="w-full text-sm border border-slate-300 rounded-lg p-2 bg-white"></textarea>
               </div>
             </div>
 
@@ -715,9 +706,9 @@
             <div id="box-punto-validado" class="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl hidden">
               <div class="flex items-center space-x-2">
                 <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                <span class="text-xs font-bold text-emerald-900" id="txt-punto-validado-nombre">Punto Validado: Ecopunto Plaza Cívica</span>
+                <span class="text-sm font-bold text-emerald-900" id="txt-punto-validado-nombre">Parada encontrada</span>
               </div>
-              <p class="text-[13px] text-emerald-700 mt-1" id="txt-punto-validado-detalle">Ubicación verificada por geocerca en San Francisco.</p>
+              <p class="text-[13px] text-emerald-700 mt-1" id="txt-punto-validado-detalle"></p>
             </div>
           </div>
 
@@ -822,7 +813,7 @@
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
           <i data-lucide="camera" class="w-4 h-4 text-orange-600"></i>
-          <span>Escáner QR de Punto Limpio</span>
+          <span>Escanear código</span>
         </h3>
         <button onclick="cerrarModalScanner()" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar escáner">×</button>
       </div>
@@ -832,12 +823,12 @@
       </div>
 
       <div class="text-center pt-2">
-        <p class="text-[13px] text-slate-500 mb-2">Puntos frecuentes de verificación:</p>
+        <p class="text-[13px] text-slate-500 mb-2">Atajos para probar:</p>
         <div class="flex flex-wrap gap-1.5 justify-center">
           <button id="btn-qr-plaza-civica" onclick="procesarLecturaQR('ECO-SF-001')" class="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-xs px-2 py-1 rounded font-medium">Plaza Cívica</button>
           <button onclick="procesarLecturaQR('ECO-SF-004')" class="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs px-2 py-1 rounded font-medium">UTN FRSFCO</button>
           <button onclick="procesarLecturaQR('SOL-SF-102')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs px-2 py-1 rounded font-medium">Retiro Domicilio #102</button>
-          <button onclick="procesarLecturaQR('COD-INVALIDO-999')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs px-2 py-1 rounded font-medium">Código No Registrado</button>
+          <button onclick="procesarLecturaQR('COD-INVALIDO-999')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs px-2 py-1 rounded font-medium">Código inexistente</button>
         </div>
       </div>
     </div>
@@ -1368,7 +1359,7 @@
       }
 
       setTimeout(() => {
-        mostrarToast('Servicio Conectado', 'Sistema municipal de gestión de residuos listo.');
+        
         // Registro inicial en la consola MQTT
         agregarLogConsolaMQTT('sf/contenedores/ECO-SF-001/telemetria', {
           dispositivo_id: 'SF-IOT-001',
@@ -1669,71 +1660,92 @@
     }
 
 
-    // Secciones de cada tablero: alimentan el menú lateral y la barra inferior
+    const ETIQUETA_ESTADO = { pendiente: 'Pendiente', en_camino: 'En camino', recolectado: 'Retirado', cancelado: 'Cancelado',
+      abierto: 'Abierto', en_atencion: 'En atención', resuelto: 'Resuelto' };
+    const etiquetaEstado = e => ETIQUETA_ESTADO[e] || String(e).replace('_', ' ');
+
+    // Pantallas de cada perfil: el menú lateral y la barra inferior muestran una por vez
     const MENU_POR_ROL = {
       ciudadano: [
-        { t: 'Inicio', i: 'home', d: 'seccion-inicio-vecino', barra: true },
-        { t: 'Mapa', i: 'map-pin', d: 'seccion-mapa-vecino', barra: true },
-        { t: 'Mis solicitudes', c: 'Solicitudes', i: 'clipboard-list', d: 'card-solicitudes-vecino', barra: true },
-        { t: 'Avisos', i: 'bell', d: 'card-campanas-vecino', barra: true },
-        { t: 'Contenedores', i: 'recycle', d: 'card-disponibilidad-vecino', barra: true },
-        { t: 'Horarios', i: 'calendar-clock', d: 'card-horarios-vecino' }
+        { p: 'inicio', t: 'Inicio', i: 'home', barra: true },
+        { p: 'solicitudes', t: 'Mis solicitudes', c: 'Solicitudes', i: 'clipboard-list', barra: true },
+        { p: 'mapa', t: 'Mapa', i: 'map-pin', barra: true },
+        { p: 'avisos', t: 'Avisos', i: 'bell', barra: true },
+        { p: 'contenedores', t: 'Contenedores', i: 'recycle', barra: true },
+        { p: 'horarios', t: 'Horarios', i: 'calendar-clock' }
       ],
       autoridad: [
-        { t: 'Resumen', i: 'layout-dashboard', d: 'seccion-kpis-muni', barra: true },
-        { t: 'Rutas', i: 'route', d: 'planificador-rutas-card', barra: true },
-        { t: 'Mapa', i: 'map-pin', d: 'seccion-mapa-vecino' },
-        { t: 'Incidentes', i: 'alert-octagon', d: 'tabla-incidentes-card', barra: true },
-        { t: 'Campañas', i: 'megaphone', d: 'card-campanas-muni' },
-        { t: 'Contenedores', i: 'recycle', d: 'panel-iot-card', barra: true }
+        { p: 'resumen', t: 'Resumen', i: 'layout-dashboard', barra: true },
+        { p: 'rutas', t: 'Rutas y mapa', c: 'Rutas', i: 'route', barra: true },
+        { p: 'incidentes', t: 'Incidentes', i: 'alert-octagon', barra: true },
+        { p: 'campanas', t: 'Avisos a vecinos', c: 'Avisos', i: 'megaphone', barra: true },
+        { p: 'contenedores', t: 'Contenedores', i: 'recycle', barra: true }
       ],
       recolector: [
-        { t: 'Resumen', i: 'layout-dashboard', d: 'kpis-cuadrilla', barra: true },
-        { t: 'Mi ruta', i: 'route', d: 'seccion-paradas-cuadrilla', barra: true },
-        { t: 'Mapa', i: 'map-pin', d: 'seccion-mapa-vecino', barra: true },
-        { t: 'Confirmar parada', c: 'Confirmar', i: 'check-circle', d: 'card-confirmacion-cuadrilla', barra: true }
+        { p: 'resumen', t: 'Resumen', i: 'layout-dashboard', barra: true },
+        { p: 'ruta', t: 'Mi ruta y mapa', c: 'Mi ruta', i: 'route', barra: true },
+        { p: 'confirmar', t: 'Confirmar parada', c: 'Confirmar', i: 'check-circle', barra: true }
       ]
     };
     let rolNavegacion = null;
+    let pantallaActual = null;
 
-    function actualizarNavegacionActiva() {
+    function vistaDelRol() {
+      return document.getElementById(`vista-${rolNavegacion}`);
+    }
+
+    function mostrarPantalla(id, { arriba = true } = {}) {
+      const vista = vistaDelRol();
+      if (!vista) return;
       const items = MENU_POR_ROL[rolNavegacion] || [];
-      let activo = items.length ? items[0].d : null;
-      items.forEach(it => {
-        const el = document.getElementById(it.d);
-        if (el && el.offsetParent !== null && el.getBoundingClientRect().top <= 140) activo = it.d;
-      });
+      if (!items.some(it => it.p === id)) id = items.length ? items[0].p : null;
+      pantallaActual = id;
+      vista.querySelectorAll(':scope > [data-pantalla]').forEach(b => b.classList.toggle('hidden', b.dataset.pantalla !== id));
       document.querySelectorAll('[data-nav-destino]').forEach(b =>
-        b.setAttribute('aria-current', b.dataset.navDestino === activo ? 'true' : 'false'));
+        b.setAttribute('aria-current', b.dataset.navDestino === id ? 'true' : 'false'));
+      try { sessionStorage.setItem('SF_PANTALLA_' + rolNavegacion, id); } catch (e) {}
+      if (arriba) window.scrollTo({ top: 0 });
+      // El mapa vive en una sola pantalla por perfil: al mostrarse hay que recalcular su tamaño y su encuadre
+      if (mapaInstance && document.getElementById('seccion-mapa-vecino').offsetParent !== null) {
+        setTimeout(() => {
+          mapaInstance.invalidateSize();
+          if (rolNavegacion === 'recolector' && capaRutaCuadrilla) mapaInstance.fitBounds(capaRutaCuadrilla.getBounds(), { padding: [40, 40] });
+          else if (capasPuntos.length) mapaInstance.fitBounds(L.featureGroup(capasPuntos).getBounds().pad(0.12));
+        }, 120);
+      }
     }
 
     function renderizarNavegacion(rol) {
       rolNavegacion = rol;
       const items = MENU_POR_ROL[rol] || [];
-      items.forEach(it => { const el = document.getElementById(it.d); if (el) el.classList.add('anclaje'); });
       const lateral = document.getElementById('menu-lateral-items');
       if (lateral) {
         lateral.innerHTML = items.map(it =>
-          `<button type="button" class="nav-item" data-nav-destino="${it.d}" onclick="scrollHaciaElemento('${it.d}')"><i data-lucide="${it.i}" class="w-5 h-5 shrink-0"></i><span>${it.t}</span></button>`).join('');
+          `<button type="button" class="nav-item" data-nav-destino="${it.p}" onclick="irAPantalla('${it.p}')"><i data-lucide="${it.i}" class="w-5 h-5 shrink-0"></i><span>${it.t}</span></button>`).join('');
       }
       const barra = document.getElementById('bottom-nav-items');
       if (barra) {
         barra.innerHTML = items.filter(it => it.barra).map(it =>
-          `<button type="button" class="nav-tab" data-nav-destino="${it.d}" onclick="scrollHaciaElemento('${it.d}')"><span class="pill"><i data-lucide="${it.i}" class="w-[22px] h-[22px]"></i></span><span>${it.c || it.t}</span></button>`).join('');
+          `<button type="button" class="nav-tab" data-nav-destino="${it.p}" onclick="irAPantalla('${it.p}')"><span class="pill"><i data-lucide="${it.i}" class="w-[22px] h-[22px]"></i></span><span>${it.c || it.t}</span></button>`).join('');
       }
       lucide.createIcons();
-      actualizarNavegacionActiva();
+      let guardada = null;
+      try { guardada = sessionStorage.getItem('SF_PANTALLA_' + rol); } catch (e) {}
+      mostrarPantalla(guardada || (items[0] && items[0].p), { arriba: false });
     }
 
-    window.addEventListener('scroll', () => requestAnimationFrame(actualizarNavegacionActiva), { passive: true });
-
-    // Desplazamiento suave para navegación móvil contextual
-    function scrollHaciaElemento(id) {
+    function irAPantalla(id) {
       vibrar(15);
+      mostrarPantalla(id);
+    }
+
+    // Muestra la pantalla que contiene un elemento y lleva la vista hasta él
+    function scrollHaciaElemento(id) {
       const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (!el) return;
+      const bloque = el.closest('[data-pantalla]');
+      if (bloque) mostrarPantalla(bloque.dataset.pantalla, { arriba: false });
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // Inicialización del Mapa Leaflet
@@ -1825,8 +1837,8 @@
               <span class="text-[12px] text-slate-500 font-medium">Punto ${p.id.slice(-3)}</span>
             </div>
             <h4 class="font-bold text-slate-800 text-sm mt-1">${escapeHTML(p.nombre)}</h4>
-            <p class="text-slate-500 text-xs mt-0.5">${escapeHTML(p.tipo)} • ${escapeHTML(p.direccion)}</p>
-            <p class="text-slate-700 text-xs font-semibold mt-0.5">Atención: ${escapeHTML(p.horario || 'Consultar')}${p.materiales ? ' · Recibe ' + escapeHTML(p.materiales.join(', ').toLowerCase()) : ''}</p>
+            <p class="text-slate-500 text-xs mt-0.5">${escapeHTML(p.tipo)}. ${escapeHTML(p.direccion)}</p>
+            <p class="text-slate-700 text-xs font-semibold mt-0.5">Atención: ${escapeHTML(p.horario || 'Consultar')}${p.materiales ? '. Recibe ' + escapeHTML(p.materiales.join(', ').toLowerCase()) : ''}</p>
             <div class="mt-2 space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
               <div class="flex justify-between items-center">
                 <span class="text-xs text-slate-600 font-medium">Nivel de Llenado:</span> 
@@ -1889,7 +1901,7 @@
             <p class="text-slate-600">${escapeHTML(s.cantidad)} en ${escapeHTML(s.direccion)}</p>
             <p class="text-[13px] text-slate-500 mt-1">Vecino: ${escapeHTML(s.usuario)}</p>
             <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[12px] font-semibold ${s.estado === 'en_camino' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}">
-              Estado: ${escapeHTML(s.estado.replace('_', ' '))}
+              ${etiquetaEstado(s.estado)}
             </span>
           </div>
         `);
@@ -1938,9 +1950,9 @@
 
     // Cronograma de referencia de recolección domiciliaria por zona
     const CRONOGRAMA_RECOLECCION = [
-      { zona: 'Centro, Catedral y Hospital', barrios: ['Centro', 'Catedral', 'Hospital'], domiciliarios: 'Lun · Mié · Vie, 21:00', reciclables: 'Martes, 08:00', especiales: 'Jueves, con solicitud' },
-      { zona: 'Cincuentenario y Urquiza', barrios: ['Cincuentenario', 'Urquiza', 'Roca'], domiciliarios: 'Mar · Jue · Sáb, 21:00', reciclables: 'Miércoles, 08:00', especiales: 'Viernes, con solicitud' },
-      { zona: 'Sarmiento y Universidad', barrios: ['Sarmiento', 'Universidad', 'Cervantes'], domiciliarios: 'Lun · Mié · Vie, 20:00', reciclables: 'Jueves, 08:00', especiales: 'Sábado, con solicitud' }
+      { zona: 'Centro, Catedral y Hospital', barrios: ['Centro', 'Catedral', 'Hospital'], domiciliarios: 'Lun, Mié y Vie, 21:00', reciclables: 'Martes, 08:00', especiales: 'Jueves, con solicitud' },
+      { zona: 'Cincuentenario y Urquiza', barrios: ['Cincuentenario', 'Urquiza', 'Roca'], domiciliarios: 'Mar, Jue y Sáb, 21:00', reciclables: 'Miércoles, 08:00', especiales: 'Viernes, con solicitud' },
+      { zona: 'Sarmiento y Universidad', barrios: ['Sarmiento', 'Universidad', 'Cervantes'], domiciliarios: 'Lun, Mié y Vie, 20:00', reciclables: 'Jueves, 08:00', especiales: 'Sábado, con solicitud' }
     ];
 
     function renderizarCronogramaVecino() {
@@ -2026,9 +2038,9 @@
               <span class="text-[12px] px-1.5 py-0.2 rounded font-semibold ${
                 s.estado === 'recolectado' ? 'bg-emerald-100 text-emerald-800' :
                 s.estado === 'en_camino' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
-              }">${escapeHTML(s.estado.replace('_', ' '))}</span>
+              }">${etiquetaEstado(s.estado)}</span>
             </div>
-            <p class="text-slate-500 text-[13px] mt-0.5">${escapeHTML(s.cantidad)} • ${escapeHTML(s.direccion)}</p>
+            <p class="text-slate-500 text-[13px] mt-0.5">${escapeHTML(s.cantidad)}. ${escapeHTML(s.direccion)}</p>
             ${s.observaciones ? `<p class="text-[12px] text-slate-400 italic">Nota: ${escapeHTML(s.observaciones)}</p>` : ''}
             ${s.cuadrilla ? `<p class="text-[12px] text-sky-700 font-medium mt-0.5"><i data-lucide="truck" class="w-3 h-3 inline"></i> ${escapeHTML(s.cuadrilla)}</p>` : ''}
           </div>
@@ -2074,7 +2086,7 @@
                 <span class="font-semibold text-slate-800">${escapeHTML(p.subcategoria)}</span>
                 <span class="text-[12px] uppercase font-bold text-slate-400">(${escapeHTML(p.tipo)})</span>
               </div>
-              <span class="text-slate-500 text-[13px] block">${escapeHTML(p.direccion)} • ${escapeHTML(p.cantidad)}</span>
+              <span class="text-slate-500 text-[13px] block">${escapeHTML(p.direccion)}. ${escapeHTML(p.cantidad)}</span>
             </div>
             <input type="checkbox" checked value="${p.id}" class="chk-despacho-solicitud rounded text-sky-600 focus:ring-sky-500 h-4 w-4">
           </div>
@@ -2095,7 +2107,7 @@
               }">${inc.gravedad.toUpperCase()}</span>
             </td>
             <td class="py-2.5 px-3">
-              <span class="text-[13px] text-slate-700 font-medium">${escapeHTML(inc.estado.replace('_', ' '))}</span>
+              <span class="text-[13px] text-slate-700 font-medium">${etiquetaEstado(inc.estado)}</span>
             </td>
             <td class="py-2.5 px-3 text-right">
               ${inc.estado !== 'resuelto' ? `
@@ -2420,7 +2432,7 @@
         </div>
         <div class="flex items-center justify-between text-[13px] text-slate-300">
           <span>Llenado: <strong class="${esCritico ? 'text-rose-400 font-black' : 'text-white'}">${pct}%</strong> ${esCritico ? '(Alerta de Desborde)' : '(Operativo)'}</span>
-          <span class="text-slate-400 text-[12px]">Temp: ${temp}°C · Batería: ${bat}%</span>
+          <span class="text-slate-400 text-[12px]">Temperatura ${temp}°C, batería ${bat}%</span>
         </div>
       `;
 
@@ -2447,18 +2459,18 @@
       // Paradas activas: contenedores a vaciar (>25%) y retiros asignados a este móvil
       const paradasEcopuntos = estadoApp.ecopuntos
         .filter(e => e.capacidad > 25)
-        .map(e => ({ id: e.id, nombre: e.nombre, tipo: 'Vaciado Contenedor', dir: e.direccion, estado: 'pendiente', capacidad: e.capacidad, coords: e.coords }));
+        .map(e => ({ id: e.id, nombre: e.nombre, tipo: 'Vaciar contenedor', dir: e.direccion, estado: 'pendiente', capacidad: e.capacidad, coords: e.coords }));
 
       const paradasSolicitudes = estadoApp.solicitudes
         .filter(s => s.estado === 'en_camino' && esMiCuadrilla(s.cuadrilla))
-        .map(s => ({ id: s.id, nombre: s.subcategoria, tipo: 'Retiro Domiciliario', dir: s.direccion, estado: 'en_camino', coords: s.coords || COORDS_SF }));
+        .map(s => ({ id: s.id, nombre: s.subcategoria, tipo: 'Retiro a domicilio', dir: s.direccion, estado: 'en_camino', coords: s.coords || COORDS_SF }));
 
       // Orden de visita según la ruta optimizada (vecino más cercano + 2-opt)
-      const base = { id: 'BASE-MUNI', nombre: 'Centro Operativo San Francisco', coords: COORDS_SF };
+      const base = { id: 'BASE-MUNI', nombre: 'Base municipal', coords: COORDS_SF };
       const tsp = resolverTSP(base, [...paradasEcopuntos, ...paradasSolicitudes]);
       const porId = Object.fromEntries([...paradasEcopuntos, ...paradasSolicitudes].map(x => [x.id, x]));
       const paradas = tsp.ruta.slice(1, -1).map(x => porId[x.id]).filter(Boolean);
-      conteo.innerText = `${paradas.length} paradas${paradas.length ? ` · ${tsp.distanciaKm} km` : ''}`;
+      conteo.innerText = `${paradas.length} paradas${paradas.length ? `, ${tsp.distanciaKm} km` : ''}`;
 
       // Trazado de la ruta en el mapa de la cuadrilla
       const sesion = obtenerSesionActual();
@@ -2470,7 +2482,7 @@
           if (capaRutaCuadrilla !== rectaCuadrilla || !mapaInstance) return;
           mapaInstance.removeLayer(rectaCuadrilla);
           capaRutaCuadrilla = L.polyline(r.puntos, { color: '#ea580c', weight: 5, opacity: 0.9 }).addTo(mapaInstance);
-          conteo.innerText = `${paradas.length} paradas · ${r.km} km por calles`;
+          conteo.innerText = `${paradas.length} paradas, ${r.km} km por calles`;
         }).catch(() => {});
         const firma = paradas.map(x => x.id).join('|');
         if (firma !== firmaRutaCuadrilla) {
@@ -2487,11 +2499,11 @@
               <span class="font-bold text-slate-800">${escapeHTML(p.nombre)}</span>
               ${p.capacidad >= 80 ? '<span class="text-[12px] font-bold bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded animate-pulse">URGENTE</span>' : ''}
             </div>
-            <p class="text-slate-500 text-[13px] mt-1">${escapeHTML(p.tipo)} • ${escapeHTML(p.dir)}</p>
-            <span class="text-[12px] font-mono text-orange-700 font-semibold bg-orange-100 px-1.5 py-0.5 rounded mt-1 inline-block">Código ${p.id}</span>
+            <p class="text-slate-600 text-[13px] mt-1">${escapeHTML(p.tipo)}. ${escapeHTML(p.dir)}</p>
+            <p class="text-slate-500 text-[12px] mt-0.5">Código ${p.id}</p>
           </div>
-          <button onclick="document.getElementById('input-qr-manual').value='${p.id}'; validarIdentificadorQR('${p.id}')" title="Cargar parada" class="text-orange-700 hover:text-orange-900 bg-orange-100 p-1.5 rounded-lg">
-            <i data-lucide="scan" class="w-4 h-4"></i>
+          <button onclick="document.getElementById('input-qr-manual').value='${p.id}'; validarIdentificadorQR('${p.id}'); mostrarPantalla('confirmar')" class="shrink-0 text-orange-800 hover:text-orange-900 bg-orange-100 hover:bg-orange-200 font-bold px-3 py-1.5 rounded-lg text-[13px]">
+            Confirmar
           </button>
         </div>
       `).join('') || '<p class="text-xs text-slate-400 italic p-2">No hay paradas pendientes en el turno actual.</p>';
@@ -2721,7 +2733,7 @@
       }
 
       const seleccionadas = estadoApp.solicitudes.filter(s => idsSeleccionados.includes(s.id));
-      const baseInicio = { id: 'BASE-MUNI', nombre: 'Centro Operativo San Francisco', coords: COORDS_SF };
+      const baseInicio = { id: 'BASE-MUNI', nombre: 'Base municipal', coords: COORDS_SF };
       
       const resultadoTSP = resolverTSP(baseInicio, seleccionadas);
 
@@ -2775,7 +2787,7 @@
     async function abrirModalScannerQR() {
       document.getElementById('modal-scanner').classList.remove('hidden');
       const lector = document.getElementById('qr-reader');
-      lector.innerHTML = '<div class="text-xs text-slate-300 p-4">Iniciando cámara de dispositivo...</div>';
+      lector.innerHTML = '<div class="text-xs text-slate-300 p-4">Abriendo la cámara...</div>';
 
       try {
         await cargarLectorQR().catch(() => {});
@@ -2791,7 +2803,7 @@
             () => {} // Escaneo continuo silencioso
           ).catch(err => {
             console.warn('Cámara no habilitada en este entorno:', err);
-            lector.innerHTML = '<div class="p-4 text-center text-xs text-amber-300">Cámara web no accesible en este dispositivo. Podés ingresar el identificador del contenedor manualmente en el campo inferior.</div>';
+            lector.innerHTML = '<div class="p-4 text-center text-xs text-amber-300">No se pudo usar la cámara. Escribí el código de la parada a mano.</div>';
           });
         }
       } catch (e) {
@@ -2815,7 +2827,7 @@
     // Validación estricta con feedback diferenciado y tolerancia a URIs/URLs
     function validarIdentificadorQR(codigo) {
       if (!codigo || !codigo.trim()) {
-        mostrarToast('Código Requerido', 'Ingresá o escaneá un identificador de contenedor.');
+        mostrarToast('Falta el código', 'Escribí o escaneá el código de la parada.');
         return;
       }
 
@@ -2838,24 +2850,24 @@
       if (eco) {
         box.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl block';
         txtNombre.className = 'text-xs font-bold text-emerald-900';
-        txtNombre.innerText = `Punto Validado: ${eco.nombre}`;
-        txtDetalle.innerText = `Ecopunto registrado. Nivel de llenado: ${eco.capacidad}%. Ubicación verificada en San Francisco.`;
+        txtNombre.innerText = eco.nombre;
+        txtDetalle.innerText = `Contenedor al ${eco.capacidad}% de su capacidad. Cargá el peso retirado y confirmá.`;
         document.getElementById('input-pesaje-recolector').value = (eco.capacidad * 0.75).toFixed(1);
-        mostrarToast('Código QR Verificado', `Ecopunto identificado: ${eco.nombre}`);
+        mostrarToast('Parada encontrada', eco.nombre);
       } else if (sol) {
         box.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl block';
         txtNombre.className = 'text-xs font-bold text-emerald-900';
-        txtNombre.innerText = `Solicitud Validada: #${sol.id} (${sol.subcategoria})`;
-        txtDetalle.innerText = `Vecino: ${sol.usuario} (${sol.direccion}). Cantidad: ${sol.cantidad}.`;
+        txtNombre.innerText = `Retiro de ${sol.subcategoria}`;
+        txtDetalle.innerText = `${sol.direccion}. Vecino: ${sol.usuario}. Cantidad: ${sol.cantidad}.`;
         document.getElementById('input-pesaje-recolector').value = 16.5;
-        mostrarToast('Código QR Verificado', `Solicitud #${sol.id} identificada correctamente.`);
+        mostrarToast('Parada encontrada', `Retiro de ${sol.subcategoria}`);
       } else {
         box.className = 'mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl block';
         txtNombre.className = 'text-xs font-bold text-rose-900';
-        txtNombre.innerText = `Identificador No Registrado: ${cod}`;
-        txtDetalle.innerText = 'El código escaneado no coincide con ningún contenedor ni solicitud en San Francisco.';
+        txtNombre.innerText = 'No encontramos esa parada';
+        txtDetalle.innerText = 'Revisá el código e intentá de nuevo.';
         document.getElementById('input-pesaje-recolector').value = '';
-        mostrarToast('Código Inválido', 'El ID ingresado no existe en el catastro municipal.');
+        mostrarToast('Código inexistente', 'No hay ninguna parada con ese código.');
       }
     }
 
@@ -2890,20 +2902,20 @@
       const peso = parseFloat(pesoStr) || 12.0;
 
       if (!codigo) {
-        mostrarToast('Validación Requerida', 'Validá el código QR del punto antes de confirmar.');
+        mostrarToast('Falta elegir la parada', 'Buscá la parada por su código antes de confirmar.');
         return;
       }
 
       const objetivo = estadoApp.solicitudes.find(s => s.id.toUpperCase() === codigo) ||
         estadoApp.ecopuntos.find(e => e.id.toUpperCase() === codigo);
       if (!objetivo) {
-        mostrarToast('Error de Cierre', 'No se puede confirmar recolección sobre un activo no registrado.');
+        mostrarToast('No se pudo confirmar', 'Esa parada no existe.');
         return;
       }
 
       // Validación territorial: la cuadrilla debe estar a menos de 35 m del punto
       const geo = await verificarGeocerca(objetivo.coords);
-      if (geo.estado === 'fuera' && !confirm(`Estás a ${geo.metros} m del punto (máximo ${RADIO_GEOCERCA_M} m).\n\nLa recolección quedará registrada fuera de la geocerca. ¿Confirmar igual?`)) {
+      if (geo.estado === 'fuera' && !confirm(`Estás a ${geo.metros} m de la parada (el máximo es ${RADIO_GEOCERCA_M} m).\n\nEl retiro quedará registrado como hecho lejos del lugar. ¿Confirmar igual?`)) {
         return;
       }
 
@@ -2946,7 +2958,7 @@
       }
 
       if (!encontrado) {
-        mostrarToast('Error de Cierre', 'No se puede confirmar recolección sobre un activo no registrado.');
+        mostrarToast('No se pudo confirmar', 'Esa parada no existe.');
         return;
       }
 
@@ -2957,8 +2969,8 @@
 
       guardarEnLocalStorage();
       renderizarTodo();
-      const textoGeo = geo.estado === 'dentro' ? ` Validada en el lugar (a ${geo.metros} m).` : geo.estado === 'fuera' ? ` Registrada fuera de la geocerca (a ${geo.metros} m).` : '';
-      mostrarToast('Recolección Confirmada', `Se registraron ${peso} kg de residuos. Tarea cerrada exitosamente.${textoGeo}`);
+      const textoGeo = geo.estado === 'dentro' ? ` Confirmado en el lugar.` : geo.estado === 'fuera' ? ` Registrado a ${geo.metros} m de la parada.` : '';
+      mostrarToast('Parada cerrada', `Se registraron ${peso} kg.${textoGeo}`);
     }
 
     // Subcategorías dinámicas según tipo

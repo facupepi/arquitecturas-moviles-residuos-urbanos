@@ -251,7 +251,7 @@ Las capturas muestran el panel municipal en una pantalla de escritorio y los tre
 
 [[CAPTURA:cap5_panel_escritorio.png|Panel municipal en una pantalla de escritorio.]]
 
-En escritorio, el panel organiza sus secciones en un menú lateral. En el celular esas mismas secciones se reúnen en una barra inferior, como se aprecia en las capturas siguientes.
+En escritorio, el panel organiza sus secciones en un menú lateral y cada una se abre en su propia pantalla. En el celular esas mismas secciones se reúnen en una barra inferior, como se aprecia en las capturas siguientes.
 
 [[CAPTURA:cap1_portal_ciudadano.png|Portal del vecino con el seguimiento de sus solicitudes.]] || [[CAPTURA:cap2_mapa_ecopuntos.png|Mapa de ecopuntos con su horario y nivel de llenado.]]
 

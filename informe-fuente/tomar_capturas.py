@@ -48,11 +48,8 @@ def main():
         print("Guardada cap1:", p1)
         
         # 2. Vista Ciudadano Mapa de Ecopuntos
+        page.evaluate("mostrarPantalla('mapa')")
         page.evaluate("""() => {
-            const mapEl = document.getElementById('mapa-sf');
-            if (mapEl) {
-                mapEl.scrollIntoView({ behavior: 'instant', block: 'center' });
-            }
             if (window.marcadoresEcopuntos && window.marcadoresEcopuntos.length > 0) {
                 window.marcadoresEcopuntos[0].openPopup();
             }
@@ -65,8 +62,8 @@ def main():
         
         # 3. Vista Panel de Autoridades (Mando Municipal y Despacho TSP)
         ayuda_pruebas.ingresar(page, "autoridad", 2500)
-        page.evaluate("window.scrollTo(0, 0)")
-        page.wait_for_timeout(600)
+        page.evaluate("mostrarPantalla('rutas')")
+        page.wait_for_timeout(2500)
         p3 = os.path.join(out_dir, "cap3_panel_autoridades.png")
         page.evaluate("cerrarToast()"); page.wait_for_timeout(500)
         page.screenshot(path=p3)
@@ -74,8 +71,8 @@ def main():
         
         # 4. Vista Recolector (Hoja de Ruta, Scanner y Registro)
         ayuda_pruebas.ingresar(page, "recolector", 2500)
-        page.evaluate("window.scrollTo(0, 0)")
-        page.wait_for_timeout(600)
+        page.evaluate("mostrarPantalla('ruta')")
+        page.wait_for_timeout(2500)
         p4 = os.path.join(out_dir, "cap4_app_recolector_qr.png")
         page.evaluate("cerrarToast()"); page.wait_for_timeout(500)
         page.screenshot(path=p4)
@@ -86,6 +83,7 @@ def main():
         pg2 = ctx2.new_page()
         pg2.goto(file_url, wait_until="load"); pg2.wait_for_timeout(2000)
         ayuda_pruebas.ingresar(pg2, "autoridad", 3500)
+        pg2.evaluate("mostrarPantalla('rutas')"); pg2.wait_for_timeout(2500)
         pg2.evaluate("cerrarToast()"); pg2.wait_for_timeout(500)
         p5 = os.path.join(out_dir, "cap5_panel_escritorio.png")
         pg2.screenshot(path=p5)

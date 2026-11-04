@@ -25,11 +25,13 @@ try:
         pg = ctx.new_page(); pg.on("console", lambda m: print("  [consola]", m.text[:160]) if "Push" in m.text else None); pg.goto(URL); pg.wait_for_timeout(2500)
         ayuda_pruebas.ingresar(pg, "ciudadano", 1500)
         uid = ayuda_pruebas.cuenta("ciudadano")[2]
-        pg.evaluate("void registrarPushFCM()")
-        try:
-            pg.wait_for_function("!!tokenPush", timeout=20000)
-        except Exception:
-            pass
+        for _ in range(3):  # en Chrome automatizado la primera suscripción puede tardar o fallar: se reintenta
+            pg.evaluate("void registrarPushFCM()")
+            try:
+                pg.wait_for_function("!!tokenPush", timeout=15000)
+                break
+            except Exception:
+                pg.wait_for_timeout(2000)
         token = pg.evaluate("tokenPush")
         chk("El dispositivo obtiene su token de FCM", bool(token), (token or "")[:24])
         if token:

@@ -48,7 +48,7 @@
     :focus-visible { outline: 3px solid #0077ae; outline-offset: 2px; }
     #mapa-sf {
       height: 100%;
-      min-height: 380px;
+      min-height: 460px;
       width: 100%;
       z-index: 10;
     }
@@ -58,6 +58,12 @@
       padding: 4px;
       box-shadow: 0 6px 24px rgba(16, 43, 61, 0.2);
     }
+    .leaflet-popup-content { margin: 8px 10px; }
+    .leaflet-popup-content p { margin: 2px 0 0; }
+    .leaflet-popup-content .pm, .leaflet-popup-content .pm :is(p, span, b, div, button) { font-size: 12.5px; line-height: 1.3; }
+    .leaflet-popup-content .pm h4 { font-size: 14px; line-height: 1.25; margin: 4px 0 0; }
+    .leaflet-popup-content .pm button { padding: 6px 8px; min-height: 0; }
+    .leaflet-popup-content .pm .pm-chip { font-size: 11.5px; }
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #f4f7fa; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #b7c8d6; border-radius: 9999px; }
@@ -974,6 +980,7 @@
     window.STORAGE_KEY = STORAGE_KEY;
 
     let mapaInstance = null;
+    const OPC_POPUP = { maxWidth: 230, minWidth: 190, autoPanPadding: [16, 16] };
     let capasPuntos = [];
     let capaRutaPolilinea = null;
     let scannerInstancia = null;
@@ -1842,7 +1849,7 @@
         const distCm = Math.round(150 * (1 - p.capacidad / 100));
         const marker = L.marker(p.coords, { icon: icono }).addTo(mapaInstance);
         marker.bindPopup(`
-          <div class="text-xs p-1">
+          <div class="pm">
             <div class="flex items-center justify-between pb-1 border-b border-slate-100">
               <span class="text-[12px] px-1.5 py-0.5 rounded ${esAlertaCritica ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'} font-bold">
                 ${esAlertaCritica ? 'Requiere Vaciado' : 'Operativo'}
@@ -1850,9 +1857,9 @@
               <span class="text-[12px] text-slate-500 font-medium">Punto ${p.id.slice(-3)}</span>
             </div>
             <h4 class="font-bold text-slate-800 text-sm mt-1">${escapeHTML(p.nombre)}</h4>
-            <p class="text-slate-500 text-xs mt-0.5">${escapeHTML(p.tipo)}. ${escapeHTML(p.direccion)}</p>
+            <p class="text-slate-500">${escapeHTML(p.tipo)}. ${escapeHTML(p.direccion)}</p>
             <p class="text-slate-700 text-xs font-semibold mt-0.5">Atención: ${escapeHTML(p.horario || 'Consultar')}${p.materiales ? '. Recibe ' + escapeHTML(p.materiales.join(', ').toLowerCase()) : ''}</p>
-            <div class="mt-2 space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <div class="mt-1.5 space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
               <div class="flex justify-between items-center">
                 <span class="text-xs text-slate-600 font-medium">Nivel de Llenado:</span> 
                 <span class="font-black text-xs ${esAlertaCritica ? 'text-rose-600' : esAlertaMedia ? 'text-amber-600' : 'text-emerald-700'}">${p.capacidad}% ${esAlertaCritica ? '(Desborde)' : ''}</span>
@@ -1863,10 +1870,10 @@
               ${(() => {
                 const sa = typeof obtenerSesionActual === 'function' ? obtenerSesionActual() : null;
                 if (sa && sa.rol === 'ciudadano') return '';
-                return `<div class="flex justify-between text-[13px] text-slate-500 pt-1 border-t border-slate-200/60">
-                <span>Espacio libre: <b>${distCm} cm</b></span>
-                <span>Temperatura: <b>${p.temperatura || 22.4} °C</b></span>
-                <span>Batería: <b>${p.bateria || 92}%</b></span>
+                return `<div class="grid grid-cols-3 gap-1 text-slate-500 pt-1 border-t border-slate-200/60">
+                <span>Libre<br><b>${distCm} cm</b></span>
+                <span>Temp.<br><b>${p.temperatura || 22.4} °C</b></span>
+                <span>Batería<br><b>${p.bateria || 92}%</b></span>
               </div>`;
               })()}
             </div>
@@ -1894,7 +1901,7 @@
               }
             })()}
           </div>
-        `);
+        `, OPC_POPUP);
         capasPuntos.push(marker);
       });
 
@@ -1908,7 +1915,7 @@
         });
         const marker = L.marker(s.coords, { icon: iconoSol }).addTo(mapaInstance);
         marker.bindPopup(`
-          <div class="text-xs p-1">
+          <div class="pm">
             <span class="text-[12px] uppercase font-bold text-orange-600">${escapeHTML(s.tipo)}</span>
             <h4 class="font-bold text-slate-800">${escapeHTML(s.subcategoria)}</h4>
             <p class="text-slate-600">${escapeHTML(s.cantidad)} en ${escapeHTML(s.direccion)}</p>
@@ -1917,7 +1924,7 @@
               ${etiquetaEstado(s.estado)}
             </span>
           </div>
-        `);
+        `, OPC_POPUP);
         capasPuntos.push(marker);
       });
 
@@ -1932,7 +1939,7 @@
         });
         const marker = L.marker(coords, { icon: iconoInc }).addTo(mapaInstance);
         marker.bindPopup(`
-          <div class="text-xs p-1">
+          <div class="pm">
             <span class="text-[12px] uppercase font-bold text-rose-600">INCIDENTE URBANO</span>
             <h4 class="font-bold text-slate-800">${escapeHTML(inc.tipo)}</h4>
             <p class="text-slate-600">${escapeHTML(inc.ubicacion)}</p>
@@ -1941,7 +1948,7 @@
               Prioridad: ${escapeHTML(inc.gravedad.toUpperCase())}
             </span>
           </div>
-        `);
+        `, OPC_POPUP);
         capasPuntos.push(marker);
       });
     }

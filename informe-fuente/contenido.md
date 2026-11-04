@@ -1,37 +1,40 @@
 # 1. CONSIGNA
 
-Caso de Estudio: Web Mobile App Gestión Residuos.
+Caso de estudio Web Mobile App Gestión Residuos. Trabajo práctico de desarrollo de un sistema de gestión de residuos vecinales para la ciudad de San Francisco.
 
-Trabajo Práctico: Desarrollo de Sistema de Gestión de Residuos Vecinales para la Ciudad de San Francisco.
+Contexto.
 
-- Institución: UTN Facultad Regional San Francisco (UTN FRSFCO).
-- Carrera: Ingeniería en Sistemas de Información.
-- Cátedra: Arquitecturas Móviles.
-- Docente: Ing. Juan Pablo Bono.
-- Estudiantes: Facundo Pepino y Mauricio Truchet.
+La ciudad de San Francisco necesita implementar un sistema de gestión de residuos vecinales que permita optimizar la recolección de desechos, mejorar el control de residuos especiales (reciclables, voluminosos, peligrosos) y fomentar la participación ciudadana en el cuidado ambiental.
 
-Contexto del enunciado.
+La solución debe ser eficiente y escalable, involucrando tanto a los ciudadanos como a las autoridades locales y al personal de recolección.
 
-La ciudad de San Francisco requiere modernizar la gestión de residuos vecinales. El sistema debe optimizar la recolección, controlar residuos especiales y fomentar la participación ambiental ciudadana. La solución debe ser eficiente y elástica, y coordinar la acción entre vecinos, autoridades municipales y personal de cuadrillas.
+Objetivo del trabajo práctico.
 
-Objetivo del Trabajo Práctico.
+El objetivo de este trabajo es diseñar y prototipar un sistema de aplicaciones móviles y servicios en la nube para gestionar la recolección de residuos en la ciudad de San Francisco.
 
-Diseñar y prototipar una plataforma web móvil y servicios en la nube para la gestión de residuos. El sistema incorporará interfaces para ciudadanos, autoridades y cuadrillas operativas, y aplicará optimización de trayectorias y autoescalado elástico ante demandas crecientes.
+El sistema deberá contar con aplicaciones específicas para los ciudadanos, autoridades y personal de recolección, utilizando herramientas de escalado y optimización en tiempo real para satisfacer la demanda de una ciudad en crecimiento.
 
-Requerimientos establecidos.
+Requerimientos.
 
-- 1. Aplicación Ciudadana. Registro de residuos por tipo y volumen. Solicitud de retiro programado para residuos reciclables, voluminosos y peligrosos. Consulta de ecopuntos, horarios de atención y recepción de notificaciones sobre campañas barriales.
-- 2. Aplicación de Autoridades. Panel municipal con visualización de puntos de recolección en tiempo real. Planificación y asignación de rutas optimizadas para cuadrillas. Monitoreo de telemetría IoT de llenado, alertas de desborde y resolución de incidentes urbanos.
-- 3. Aplicación para Recolectores. Consulta de hojas de ruta asignadas con confirmación de paradas. Escaneo de códigos QR para autenticar la recolección en contenedores y envío de reportes viales inmediatos.
-- 4. Plataforma de Mapeo y Geolocalización. Integración con una API cartográfica para localizar puntos de recolección y generar rutas optimizadas en tiempo real.
-- 5. Notificaciones y Escalabilidad. Sistema de avisos emergentes (notificaciones push) para vecinos y cuadrillas. Arquitectura escalable basada en contenedores Docker y orquestación con Kubernetes. Herramientas de monitoreo y autoescalado elástico bajo distintas cargas de uso.
+- Aplicación ciudadana. Registro de residuos generados (categoría y cantidad). Solicitud de recolección para residuos especiales (reciclables, voluminosos, peligrosos). Acceso a la ubicación de puntos de reciclaje y horarios de recolección. Recepción de notificaciones sobre campañas de reciclaje o eventos de limpieza.
+- Aplicación de autoridades. Visualización de los puntos de residuos a recolectar y su estado en tiempo real. Planificación y asignación de rutas de recolección para el personal. Monitoreo del estado de los puntos de recolección y gestión de incidentes.
+- Aplicación para el personal de recolección. Visualización de las rutas de recolección asignadas y confirmación de tareas completadas. Escaneo de códigos QR o ingreso de identificadores para registrar la recolección en puntos específicos. Reportes sobre el estado de los contenedores o incidentes en el servicio.
+- Plataforma de mapeo y geolocalización. Integración con una API de geolocalización (Google Maps, Mapbox, etc.) para localizar los puntos de recolección y generar rutas optimizadas en tiempo real.
+- Notificaciones y escalabilidad. Implementar un sistema de notificaciones push para ciudadanos y personal de recolección. Diseñar la arquitectura para ser escalable usando contenedores (Docker) y orquestación (Kubernetes). Utilizar herramientas de monitoreo y autoescalado para asegurar el rendimiento y la disponibilidad del sistema bajo distintas cargas de uso.
 
-Entregables requeridos.
+Entregables.
 
-- 1. Diagrama de arquitectura detallado con la interacción entre componentes de frontend, backend, base de datos, cartografía y servicios de escalado.
-- 2. Prototipo funcional que permita comprobar el flujo de registro y solicitud ciudadana, junto con el panel municipal y la operatoria de cuadrillas.
-- 3. Documentación técnica con la justificación de decisiones arquitectónicas, servicios de contenedores y flujos de trabajo optimizados.
-- 4. Esquema formal de escalabilidad y monitoreo con balanceadores de carga, autoescalado elástico y métricas en Prometheus y Grafana.
+- Diagrama de arquitectura. Un diagrama detallado que describa la arquitectura de la solución, mostrando la interacción entre los diferentes componentes (frontend, backend, bases de datos, APIs de geolocalización, y servicios de escalado).
+- Prototipo funcional. Prototipo de la aplicación ciudadana, que permita probar el flujo de registro y solicitud de recolección. Prototipo de la aplicación para autoridades y personal de recolección, con funcionalidades básicas de monitoreo y asignación de tareas.
+- Documentación técnica. Explicación detallada de las decisiones arquitectónicas. Justificación de las herramientas y servicios de escalado elegidos (Docker, Kubernetes, etc.). Descripción del flujo de trabajo y las rutas optimizadas de recolección de residuos.
+- Esquema de escalado y monitoreo. Describir las estrategias de escalabilidad y monitoreo implementadas (uso de balanceadores de carga, autoescalado, monitoreo con Grafana/Prometheus o similar).
+
+Criterios de evaluación.
+
+- Diseño de arquitectura. Claridad, escalabilidad, y justificación de las herramientas seleccionadas.
+- Funcionalidad del prototipo. Cumplimiento de las funcionalidades especificadas para cada rol.
+- Documentación técnica. Explicación y justificación clara de cada componente y flujo de trabajo.
+- Innovación y creatividad. Propuestas para mejorar la eficiencia del sistema o ideas adicionales para aumentar la participación ciudadana.
 
 # 2. INTRODUCCIÓN
 
@@ -102,26 +105,27 @@ Los atributos de calidad condicionan la estructura del software y las decisiones
 
 ## 4.1. Estructura general de la solución
 
-La arquitectura separa tres niveles. Los clientes móviles muestran la información, la infraestructura en contenedores entrega y escala la aplicación, y los servicios de nube guardan los datos y envían los avisos. Cada nivel evoluciona sin afectar a los demás.
+La arquitectura se organiza en cuatro bloques. Cada uno cumple una función propia y puede cambiar sin afectar a los demás.
 
-Cada nivel cumple una función concreta, que el diagrama de la figura resume.
+- Los celulares y navegadores ejecutan la aplicación web. Un service worker, un programa que el navegador mantiene en segundo plano, la abre sin conexión y muestra los avisos aunque la aplicación esté cerrada.
+- Los servicios de Google identifican a cada persona con su cuenta, guardan los datos en tiempo real con Cloud Firestore y entregan los avisos con Firebase Cloud Messaging. El mapa usa teselas de Esri y los recorridos por calles provienen de OSRM.
+- La infraestructura de la aplicación empaqueta el sitio en una imagen Docker. Kubernetes reparte el tráfico entre las réplicas, el autoescalado ajusta su cantidad y Prometheus y Grafana vigilan su estado.
+- Los sensores de los contenedores envían sus lecturas a Mosquitto, el intermediario de mensajes, y un servicio de ingesta las guarda en Firestore. Un emisor envía las campañas a los celulares registrados.
 
-- Los dispositivos clientes ejecutan la aplicación web. Un service worker la mantiene disponible sin conexión y recibe los avisos aunque la aplicación esté cerrada.
-- La infraestructura en contenedores empaqueta la aplicación en una imagen Docker. Kubernetes reparte el tráfico entre las réplicas y suma o retira réplicas según la demanda.
-- Los servicios de Google identifican a los usuarios con su cuenta, guardan los datos en tiempo real con Cloud Firestore y entregan los avisos con Firebase Cloud Messaging. El mapa usa teselas de Esri y los recorridos por calles provienen del servicio OSRM.
+El prototipo se publica en Firebase Hosting, que distribuye los archivos desde servidores cercanos a cada usuario. La imagen Docker y Kubernetes llevan el mismo servicio a una infraestructura propia del municipio, junto con Mosquitto y la ingesta, y se verificaron en un clúster local.
 
 [[DIAGRAMA:fig1_arquitectura_residuos]]
 Epígrafe: Componentes del sistema y relación entre ellos.
 
 ## 4.2. Flujo de trabajo y secuencia operativa
 
-El circuito de recolección coordina al vecino, a la central municipal y al camión en la calle. La secuencia va desde la lectura del sensor hasta el cierre del pedido.
+El circuito de recolección coordina al vecino, a la central municipal y a la cuadrilla en la calle. La secuencia va desde la lectura del sensor hasta el cierre del pedido.
 
 El procedimiento se desarrolla en cinco etapas.
 
 - El vecino elige la categoría del residuo, indica la cantidad y confirma su ubicación. La solicitud queda registrada con estado pendiente.
 - El panel municipal recibe la solicitud en el momento. Las solicitudes elegidas se agrupan y el sistema calcula el recorrido más corto.
-- Al confirmar la ruta, el móvil asignado recibe las paradas en el orden del turno y un aviso en el celular.
+- Al confirmar la ruta, la cuadrilla asignada recibe las paradas en el orden del turno y un aviso en el celular.
 - En cada punto, la cuadrilla escanea la placa del contenedor o ingresa su código. El sistema exige estar a menos de 35 metros del lugar.
 - Con el peso cargado, el retiro se cierra y el vecino recibe el aviso de que su solicitud se completó.
 
@@ -148,38 +152,38 @@ Ordenar las paradas de una cuadrilla equivale al problema del viajante, que cons
 - El primero parte de la base y visita siempre la parada pendiente más cercana a la posición actual.
 - El segundo revisa ese recorrido e invierte tramos mientras eso acorte la distancia total. En 1.000 conjuntos de paradas elegidas al azar dentro de la ciudad, redujo el recorrido en promedio un 5,0% con 5 paradas, un 7,1% con 8 y un 7,4% con 12, sin empeorarlo nunca.
 
-Las comparaciones usan la distancia en línea recta sobre la esfera terrestre. Una vez fijado el orden, el servicio de ruteo OSRM traza el recorrido por las calles reales de San Francisco y calcula los kilómetros que recorrerá el móvil.
+Las comparaciones usan la distancia en línea recta sobre la esfera terrestre. Una vez fijado el orden, el servicio de ruteo OSRM traza el recorrido por las calles reales de San Francisco y calcula los kilómetros que recorrerá el camión.
 
-## 4.5. Arquitectura IoT y protocolo de comunicación para contenedores inteligentes
+## 4.5. Sensores en los contenedores y protocolo de comunicación
 
-Cada contenedor inteligente incorpora un microcontrolador de bajo consumo con un sensor ultrasónico, que mide qué tan lleno está, y una sonda de temperatura. La elección del protocolo de envío comparó cuatro alternativas y se inclinó por MQTT.
+Cada contenedor inteligente incorpora un microcontrolador de bajo consumo con un sensor ultrasónico, que mide qué tan lleno está, y una sonda de temperatura. La comparación de cuatro protocolos de envío llevó a elegir MQTT.
 
 MQTT desacopla a quien mide de quien consume el dato, y su cabecera mínima alarga la vida de la batería. Tres mecanismos garantizan la llegada de la información.
 
 - La entrega con confirmación asegura que el intermediario reciba cada lectura y cada alarma.
-- Un mensaje de última voluntad avisa automáticamente si un sensor deja de responder por falta de batería o de señal.
+- Un aviso de desconexión, que el intermediario publica por su cuenta, indica si un sensor deja de responder por falta de batería o de señal.
 - Un puerto adicional para navegadores permite que el panel municipal reciba los eventos sin servidores intermedios.
 
-Los temas se organizan por contenedor y separan las mediciones periódicas, las alarmas urgentes y las órdenes del municipio, como cambiar la frecuencia de muestreo. Cada mensaje informa el identificador del contenedor, la hora, la distancia medida, el porcentaje de llenado, la temperatura y la batería.
+Los canales de mensajes se organizan por contenedor y separan las mediciones periódicas, las alarmas urgentes y las órdenes del municipio, como cambiar la frecuencia de muestreo. Cada mensaje informa el identificador del contenedor, la hora, la distancia medida, el porcentaje de llenado, la temperatura y la batería.
 
-Un servicio de ingesta, alojado en el clúster junto a Mosquitto, recibe las lecturas y actualiza el llenado en Firestore. Si un contenedor supera el 80%, genera una alerta prioritaria y suma su parada a la ruta de la cuadrilla. El prototipo reproduce este circuito con sensores simulados que escriben sus lecturas en la nube.
+Un servicio de ingesta, alojado en el clúster junto a Mosquitto, toma las lecturas y actualiza el llenado en Firestore. Si un contenedor supera el 80%, genera una alerta prioritaria y suma su parada a la ruta de la cuadrilla. El prototipo reproduce este circuito con sensores simulados que escriben sus lecturas en la nube.
 
 El siguiente cuadro resume la comparación que fundamenta la elección.
 
 | Protocolo | Funcionamiento | Consumo de datos | Decisión |
 |---|---|---|---|
-| MQTT | Los sensores publican mensajes en temas y los interesados se suscriben, sobre una conexión permanente | Cabecera mínima de 2 bytes | Elegido por su bajo consumo, la entrega confirmada y la reconexión automática |
+| MQTT | Los sensores publican mensajes en canales y los interesados se suscriben, sobre una conexión permanente | Cabecera mínima de 2 bytes | Elegido por su bajo consumo, la entrega confirmada y la reconexión automática |
 | CoAP | Consulta y respuesta binaria sobre mensajes sueltos | Cabecera de 4 bytes | Descartado porque los navegadores no lo soportan |
 | HTTP | Cada lectura es una consulta que espera respuesta | Más de 500 bytes por mensaje | Descartado por el consumo de batería |
 | LoRaWAN | Radio de largo alcance con envío en un solo sentido | Variable según la distancia | Complementa a MQTT en zonas sin cobertura celular mediante una pasarela |
 
 Epígrafe: Comparación de protocolos de comunicación para los sensores.
 
-# 5. PROTOTIPO FUNCIONAL WEB MOBILE
+# 5. PROTOTIPO FUNCIONAL
 
 ## 5.1. Módulo de autenticación, perfiles y control de acceso
 
-Firebase Authentication identifica a cada persona con su cuenta de Google. No existen contraseñas propias, y cada sesión recibe un identificador real que Cloud Firestore verifica en sus reglas de seguridad.
+Firebase Authentication identifica a cada persona con su cuenta de Google. No existen contraseñas propias, y cada sesión recibe una credencial firmada que Cloud Firestore verifica en sus reglas de seguridad.
 
 El rol de cada cuenta lo asigna el servidor. Las cuentas de la autoridad y de la cuadrilla figuran en una lista privada, y cualquier otra cuenta entra como vecino. Hay tres perfiles.
 
@@ -218,54 +222,46 @@ La aplicación del vecino evita formularios largos que desalienten la participac
 
 El panel concentra las herramientas de supervisión y despacho de la Dirección de Servicios Públicos.
 
-- Los indicadores resumen las solicitudes pendientes, las cuadrillas en calle, los incidentes abiertos y los puntos limpios activos.
+- Los indicadores resumen las solicitudes pendientes, las cuadrillas en la calle, los incidentes abiertos y los ecopuntos activos.
 - La vista de contenedores muestra el llenado, la temperatura y la batería de cada uno, con actualización en vivo, y permite calibrar los sensores.
 - El despachador calcula el recorrido óptimo de las solicitudes marcadas, lo traza por las calles y lo asigna a la cuadrilla elegida, que recibe el aviso de inmediato.
 - La consola de incidentes lista los problemas reportados, los clasifica por gravedad y permite marcarlos como resueltos.
 - Las campañas se redactan en el panel y llegan en vivo a vecinos y cuadrillas.
 
+[[CAPTURA:cap5_panel_escritorio.png|Panel municipal en una pantalla de escritorio.]]
+
+En escritorio, el panel organiza sus secciones en un menú lateral y cada una se abre en su propia pantalla. En el celular esas mismas secciones se reúnen en una barra inferior.
+
 ## 5.4. Módulo operativo para personal de cuadrilla
 
 La aplicación del recolector se diseñó para usarse con una mano y en movimiento, con textos legibles a pleno sol.
 
-- La hoja de ruta presenta las paradas del móvil en el orden óptimo, el recorrido por calles con sus kilómetros, un resumen del turno y una marca de urgencia en los contenedores casi llenos.
-- El escáner lee la placa de cada contenedor con la cámara o acepta el código ingresado a mano, y rechaza los que no pertenecen al catastro municipal.
-- Tras vaciar el contenedor o retirar el residuo, el operario anota el peso y confirma la parada.
+- La hoja de ruta presenta las paradas del camión en el orden óptimo, el recorrido por calles con sus kilómetros, un resumen del turno y una marca de urgencia en los contenedores casi llenos.
+- El escáner lee la placa de cada contenedor con la cámara o acepta el código ingresado a mano, y rechaza los que no figuran en el registro municipal de contenedores.
+- Al tocar Confirmar en una parada se abre una ventana con el código, el peso y las observaciones, sin salir de la hoja de ruta.
 - El reporte de problemas se completa con dos toques y alerta de inmediato a la central.
 
 Antes de cerrar una parada, la aplicación comprueba que el código corresponda a un punto o a una solicitud existente y que el teléfono esté a menos de 35 metros del lugar. Si la distancia es mayor, pide una confirmación expresa y deja registrado que la recolección se hizo fuera del radio.
 
 ## 5.5. Plataforma de cartografía y geolocalización
 
-El mapa se construye con la biblioteca Leaflet y las teselas de Esri. Esta combinación ofrece un plano urbano nítido, sin marcas de agua ni cargos por uso.
+El mapa se construye con la biblioteca Leaflet y las teselas de Esri, que ofrecen un plano urbano nítido, sin marcas de agua ni cargos por uso. Los recorridos por calles provienen de OSRM, un servicio de ruteo abierto. Si no respondiera, el mapa mantiene el trazo en línea recta.
 
-- Esri evita los bloqueos que aplican los servidores comunitarios y asegura un mapa limpio en toda la ciudad.
-- Esta solución no depende de tarifas variables como las de otros proveedores comerciales, lo que da previsibilidad al presupuesto municipal.
-- Los recorridos por calles provienen de OSRM, un servicio de ruteo abierto. Si no respondiera, el mapa mantiene el trazo en línea recta.
-
-El mapa se centra en San Francisco y muestra los cinco ecopuntos de la ciudad, entre ellos la Plaza Cívica, el Parque Cincuentenario y el Punto Verde de la UTN. Un botón centra la vista en la ubicación del teléfono.
+El mapa se centra en San Francisco y distingue por color los ecopuntos, los contenedores casi llenos, los pedidos de retiro y los incidentes. Al tocar un ecopunto se ven su horario, los materiales que recibe y su llenado. Un botón centra la vista en la ubicación del teléfono.
 
 ## 5.6. Capturas de la interfaz en ejecución
 
-Las capturas muestran el panel municipal en una pantalla de escritorio y los tres perfiles en el celular.
+Las capturas muestran los perfiles del vecino y de la cuadrilla en el celular.
 
-[[CAPTURA:cap5_panel_escritorio.png|Panel municipal en una pantalla de escritorio.]]
+[[CAPTURA:cap1_portal_ciudadano.png|Portal del vecino.]] || [[CAPTURA:cap2_mapa_ecopuntos.png|Horario y llenado de un ecopunto.]] || [[CAPTURA:cap4_app_recolector_qr.png|Hoja de ruta de la cuadrilla.]]
 
-En escritorio, el panel organiza sus secciones en un menú lateral y cada una se abre en su propia pantalla. En el celular esas mismas secciones se reúnen en una barra inferior, como se aprecia en las capturas siguientes.
-
-[[CAPTURA:cap1_portal_ciudadano.png|Portal del vecino con el seguimiento de sus solicitudes.]] || [[CAPTURA:cap2_mapa_ecopuntos.png|Mapa de ecopuntos con su horario y nivel de llenado.]]
-
-El portal del vecino promueve la participación con un acceso ágil a los puntos limpios y a sus horarios.
-
-[[CAPTURA:cap3_panel_autoridades.png|Panel municipal en el celular.]] || [[CAPTURA:cap4_app_recolector_qr.png|Aplicación de la cuadrilla con la hoja de ruta por calles.]]
-
-El panel municipal agiliza las decisiones y la aplicación de la cuadrilla asegura la trazabilidad del residuo en territorio.
+El vecino ve solo sus propias solicitudes, con su estado y la cuadrilla asignada, y al tocar un ecopunto consulta su horario y su llenado. La cuadrilla trabaja en una sola pantalla, con el resumen del turno, las paradas en orden y el mapa de su recorrido.
 
 # 6. ESQUEMA DE ESCALABILIDAD Y MONITOREO
 
 ## 6.1. Contenerización de servicios con Docker
 
-La aplicación se empaqueta en una imagen Docker mínima, basada en el servidor Nginx sobre Alpine y sin privilegios de administrador. La imagen es liviana, se reproduce igual en cualquier nodo y expone pocos puntos de ataque.
+La aplicación se empaqueta en una imagen Docker mínima, basada en el servidor Nginx sobre una distribución mínima de Linux y sin privilegios de administrador. La imagen es liviana, funciona de la misma manera en cualquier servidor y expone pocos puntos de ataque.
 
 | Atributo | Imagen estándar de Nginx | Imagen del proyecto | Beneficio |
 |---|---|---|---|
@@ -282,10 +278,21 @@ El contenedor incluye controles automáticos de salud. Uno verifica que el servi
 
 Kubernetes ejecuta las réplicas de la aplicación y las separa del acceso desde internet. La configuración se verificó en un clúster local con la imagen del proyecto.
 
-- El controlador de ingreso, basado en Nginx, recibe el tráfico, exige conexión cifrada y limita a 50 peticiones por segundo a cada dirección para evitar abusos.
+- La puerta de entrada del clúster, basada en Nginx, recibe el tráfico, exige conexión cifrada y limita a 50 peticiones por segundo a cada dirección para evitar abusos.
 - El servicio interno ofrece un punto de acceso estable y reparte las peticiones entre las réplicas de forma rotativa.
 - La actualización progresiva agrega una réplica nueva antes de retirar la anterior, de modo que los vecinos nunca pierden el servicio durante un cambio de versión.
-- La distribución entre nodos separa las réplicas en máquinas distintas, para que la caída de una no detenga la aplicación.
+- La distribución entre servidores separa las réplicas en máquinas distintas, para que la caída de una no detenga la aplicación.
+
+El siguiente cuadro compara las opciones evaluadas para alojar el servicio.
+
+| Opción | Ventajas | Desventajas | Decisión |
+|---|---|---|---|
+| Kubernetes con autoescalado | Reparte la carga, reemplaza las réplicas caídas y escala sin intervención | Requiere administrar un clúster | Elegida para la infraestructura propia del municipio |
+| Servidores virtuales fijos | Configuración simple | Escalar exige trabajo manual y se paga la capacidad ociosa | Descartada |
+| Contenedores administrados por un proveedor | Escalan solos sin administrar un clúster | Atan el servicio a un proveedor y limitan el control de la red | Alternativa si el municipio no administra servidores |
+| Solo Firebase Hosting | Sin servidores que mantener y con distribución mundial | No aloja Mosquitto ni el servicio de ingesta | Usada para publicar el prototipo |
+
+Epígrafe: Opciones evaluadas para alojar el servicio.
 
 ## 6.3. Autoescalado horizontal de réplicas
 
@@ -296,13 +303,13 @@ El autoescalado ajusta la cantidad de réplicas según el uso de recursos que mi
 - Ante un aumento brusco, puede duplicar las réplicas cada 15 segundos para no perder velocidad de respuesta.
 - Al bajar la demanda, espera 300 segundos antes de retirar réplicas, para evitar encendidos y apagados continuos.
 
-La política se comprobó en un clúster local con seis generadores de carga. El cuadro muestra cómo respondió el sistema.
+La política se comprobó en un clúster local con seis generadores de carga. El uso del procesador se mide sobre lo reservado para cada réplica, por lo que puede superar el 100%.
 
 | Tiempo desde el inicio de la carga | Réplicas en funcionamiento | Uso del procesador |
 |---|---|---|
 | 0 segundos | 2 | 1% |
 | 30 segundos | 2 | 73% |
-| 45 segundos | 2, con 6 solicitadas | 491% |
+| 45 segundos | 2, y el autoescalado ya pidió 6 | 491% |
 | 60 segundos | 6 | 470% |
 | 80 segundos | 10 | 433% |
 | 100 segundos | 10 | 145% |
@@ -318,23 +325,23 @@ Cada réplica incorpora un exportador que publica las métricas del servidor Ngi
 - Una advertencia se activa si el tráfico supera las 200 peticiones por segundo durante un minuto o si las conexiones abiertas superan las 400.
 - Otra advertencia indica que el autoescalado llegó al máximo de 10 réplicas, para evaluar una ampliación.
 
-En la prueba local con 60 clientes simultáneos, el tablero registró un pico de unos 300 peticiones por segundo. Al detener el exportador de la réplica, la alerta de caída se activó en menos de un minuto.
+En la prueba local con 60 clientes durante 60 segundos, el tablero registró un pico de 456 peticiones por segundo. El tráfico superó las 200 por segundo durante menos de un minuto, por lo que la advertencia no llegó a activarse. Al detener el exportador, la alerta de caída se activó a los 45 segundos.
 
 [[CAPTURA:cap6_monitoreo.png|Tablero de Grafana durante la prueba de carga.]]
 
 # 7. ESTRATEGIA DE PRUEBAS Y CALIDAD
 
-Pruebas automáticas recorren cada perfil, comprueban la sincronización entre dispositivos y verifican las reglas de seguridad contra la base publicada. Se ejecutaron sobre la copia local, el contenedor Docker y la aplicación publicada.
+Las pruebas automáticas recorren cada perfil, comprueban la sincronización entre dispositivos y verifican las reglas de seguridad contra la base publicada. Se ejecutaron sobre la copia local, el contenedor Docker y la aplicación publicada.
 
 | Nivel | Herramienta | Qué se verificó | Resultado |
 |---|---|---|---|
 | Flujos por perfil | Navegador automatizado | Recorrido completo del vecino, la autoridad y la cuadrilla, con cada tablero aislado | Aprobado |
 | Datos en vivo | Tres sesiones simultáneas | Solicitudes, despachos, campañas e incidentes que llegan en vivo a los otros perfiles | Aprobado |
-| Geocerca | Navegador con ubicación simulada | Aceptación dentro de los 35 metros y confirmación expresa fuera de ellos | Aprobado |
+| Validación de ubicación | Navegador con ubicación simulada | Aceptación dentro de los 35 metros y confirmación expresa fuera de ellos | Aprobado |
 | Seguridad | Consultas directas a la base y emulador | Permisos de cada rol, rechazo sin sesión y asignación de roles por cuenta de Google | Aprobado |
 | Avisos push | Chrome y Firebase Cloud Messaging | Aviso recibido con la aplicación cerrada y baja del dispositivo al cerrar sesión | Aprobado |
 | Rutas | 1.000 conjuntos de paradas por tamaño | Mejora del segundo método sobre el primero | Entre 5,0% y 7,4% |
-| Carga | 60 clientes durante 60 segundos | Respuesta del contenedor Docker | 205 peticiones por segundo, 99,7% exitosas y 95% en menos de 264 ms |
+| Carga | 60 clientes durante 60 segundos | Respuesta del contenedor Docker | 432 peticiones por segundo, ninguna con error y 95% en menos de 214 ms |
 | Autoescalado | Clúster local y generadores de carga | Aumento de réplicas bajo demanda | De 2 a 10 réplicas en poco más de un minuto |
 | Calidad web | Lighthouse | Accesibilidad, buenas prácticas, buscadores y rendimiento | Accesibilidad 100, prácticas 96, buscadores 92, rendimiento 100 en escritorio y 77 en celular |
 | Sensores | Simulador de contenedores | Lecturas sincronizadas con Firestore | Aprobado |
@@ -370,7 +377,7 @@ El siguiente cuadro relaciona cada requerimiento de la consigna con la funcional
 | Retiro programado de reciclables, voluminosos y peligrosos | Solicitud con dirección, ubicación en el mapa y fecha deseada |
 | Ecopuntos, horarios y campañas | Mapa con dirección, horario, materiales y llenado de cada punto, tabla de recolección por zona y avisos de campañas |
 | Puntos de recolección en tiempo real | Panel municipal con contenedores y solicitudes que se actualizan al instante |
-| Rutas optimizadas para las cuadrillas | Recorrido más corto calculado con dos métodos combinados, trazado por las calles y asignado a un móvil |
+| Rutas optimizadas para las cuadrillas | Recorrido más corto calculado con dos métodos combinados, trazado por las calles y asignado a una cuadrilla |
 | Telemetría, alertas de desborde e incidentes | Llenado, temperatura y batería de cada contenedor, alerta sobre el 80% y consola de incidentes |
 | Hoja de ruta, códigos QR y reportes viales | Paradas ordenadas, escaneo con validación a 35 metros y reporte de problemas en dos toques |
 | Mapeo y geolocalización | Mapa con Leaflet y Esri, ubicación del teléfono y recorridos por calles con OSRM |
@@ -383,25 +390,27 @@ Epígrafe: Cumplimiento de los requerimientos de la consigna.
 El proyecto reúne los siguientes entregables, que permiten reproducir la solución completa.
 
 - La aplicación web móvil con sus tres perfiles, el cálculo de rutas, el lector de códigos QR, los avisos push y el funcionamiento sin conexión.
-- La imagen Docker y los manifiestos de Kubernetes, con ingreso cifrado, autoescalado y distribución entre nodos.
+- La imagen Docker y los archivos de configuración de Kubernetes, con ingreso cifrado, autoescalado y distribución entre nodos.
 - Las reglas de seguridad de Firestore por rol y sus índices.
-- La pila de monitoreo con Prometheus, alertas y tablero de Grafana.
+- El monitoreo con Prometheus, sus alertas y el tablero de Grafana.
 - El emisor de avisos push y el simulador de sensores, con el servicio de ingesta y el intermediario Mosquitto.
 - La documentación técnica, con los diagramas, la justificación de las decisiones y los resultados de las pruebas.
 
 La aplicación publicada se encuentra en https://sf-residuos-urbanos-utn.web.app y su circuito completo se recorre con tres ventanas.
 
 - Vecino. Con cualquier cuenta de Google, registra una solicitud de retiro voluminoso y revisa el mapa, los horarios y los contenedores.
-- Autoridad. Con una cuenta a la que se asignó ese rol, ve llegar la solicitud, elige el móvil y despacha la ruta, que se traza por las calles. También envía una campaña.
-- Cuadrilla. Con una cuenta a la que se asignó ese rol, recibe la parada, ingresa el código del contenedor y confirma el peso.
+- Autoridad. Con una cuenta habilitada por los autores a pedido del docente, ve llegar la solicitud, elige la cuadrilla y despacha la ruta, que se traza por las calles. También envía una campaña.
+- Cuadrilla. Con otra cuenta habilitada del mismo modo, recibe la parada, ingresa el código del contenedor y confirma el peso.
 - Avisos. Una vez aceptadas las notificaciones, el emisor de avisos envía un mensaje que llega al celular con la aplicación cerrada.
 
 # 10. INNOVACIÓN Y PARTICIPACIÓN CIUDADANA
 
-Dos mejoras potencian la adopción ciudadana y la sostenibilidad del servicio.
+Cuatro mejoras potencian la eficiencia del servicio y la participación de los vecinos.
 
-- Un sistema de incentivos acredita puntos por cada entrega de residuos clasificados, canjeables por bonificaciones en tasas municipales. El prototipo ya acumula los puntos del vecino.
-- Un mapa colaborativo permite denunciar basurales clandestinos con foto y ubicación, para que las cuadrillas intervengan con mayor rapidez.
+- Un sistema de incentivos acredita puntos por cada kilo de reciclables entregado, canjeables por bonificaciones en tasas municipales. El prototipo ya muestra el aporte de cada vecino.
+- Una predicción del llenado estima, con el historial de cada sensor, cuándo se completará cada contenedor y lo suma a la ruta antes de que desborde.
+- Un mapa colaborativo permite denunciar basurales con foto y ubicación, para que las cuadrillas intervengan con mayor rapidez.
+- Un ranking mensual de barrios publica los kilos reciclados por zona y premia a los que más mejoran.
 
 # 11. CONCLUSIONES
 
@@ -415,9 +424,13 @@ El prototipo muestra que un servicio público esencial puede modernizarse con ar
 # 12. BIBLIOGRAFÍA
 
 - Bono, J. P. (2026). *Apuntes de Cátedra: Modelos de Arquitecturas basados en Cloud Computing y Escalado de Aplicaciones*. UTN Facultad Regional San Francisco.
-- Google Cloud. (2026). *Cloud Firestore Documentation: Realtime Data and Security Rules Architecture*. Google Developers.
-- Kubernetes Authors. (2026). *Horizontal Pod Autoscaling and Ingress Controller Guidelines*. The Linux Foundation.
+- Google. (2026). *Cloud Firestore documentation*. Firebase.
+- Google. (2026). *Firebase Cloud Messaging documentation*. Firebase.
+- Grafana Labs. (2026). *Grafana documentation*. Grafana Labs.
+- Kubernetes Authors. (2026). *Horizontal Pod Autoscaling*. Kubernetes Documentation.
+- Leaflet. (2026). *Leaflet API reference*. Leaflet.
 - Newman, S. (2021). *Building Microservices: Designing Fine-Grained Systems* (2nd ed.). O'Reilly Media.
-- OpenStreetMap Foundation. (2026). *OpenStreetMap API and Leaflet Integration Reference*. OSMF.
-- Prometheus Authors. (2026). *Prometheus Monitoring and Alerting Architecture*. Cloud Native Computing Foundation.
+- OASIS. (2019). *MQTT Version 5.0*. OASIS Standard.
+- Project OSRM. (2026). *OSRM API documentation*. Project OSRM.
+- Prometheus Authors. (2026). *Prometheus documentation*. Cloud Native Computing Foundation.
 - van Drongelen, M., Dennis, A., Garabedian, R., Gonzalez, A. y Krishnaswamy, A. (2017). *Lean Mobile App Development: Apply Lean startup methodologies to develop successful iOS and Android apps*. Packt Publishing.

@@ -314,6 +314,7 @@
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-600 mb-3">
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>Ecopunto</span>
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 mr-1.5"></span>Casi lleno</span>
+              <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-sky-600 mr-1.5"></span>Pedido de retiro</span>
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>Incidente</span>
             </div>
 
@@ -386,7 +387,7 @@
             <tbody id="tabla-cronograma-vecino"></tbody>
           </table>
         </div>
-        <p class="text-[12px] text-slate-400 mt-2">Los puntos limpios atienden de lunes a sábado de 8 a 20 h. Los retiros especiales se coordinan con una solicitud previa.</p>
+        <p class="text-[12px] text-slate-400 mt-2">Cada ecopunto tiene su propio horario de atención. Los retiros especiales se coordinan con una solicitud previa.</p>
       </div>
     </div>
 
@@ -422,7 +423,7 @@
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div class="flex items-center justify-between text-xs text-slate-500">
-            <span>Puntos limpios activos</span>
+            <span>Ecopuntos activos</span>
             <span class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
           </div>
           <div class="text-xl font-black text-emerald-700 mt-2" id="kpi-ecopuntos-activos">5 operativos</div>
@@ -1917,7 +1918,7 @@
       estadoApp.solicitudes.filter(s => s.estado !== 'recolectado' && (!esVecino || (uidMapa && s.usuarioId === uidMapa))).forEach(s => {
         const iconoSol = L.divIcon({
           className: 'custom-pin-sol',
-          html: `<div class="w-7 h-7 rounded-full ${s.tipo === 'voluminoso' ? 'bg-orange-600' : s.tipo === 'peligroso' ? 'bg-rose-600' : 'bg-blue-600'} border-2 border-white shadow-md flex items-center justify-center text-white text-[12px] font-bold">📦</div>`,
+          html: `<div class="w-7 h-7 rounded-full bg-sky-600 border-2 border-white shadow-md flex items-center justify-center text-white text-[12px] font-bold">📦</div>`,
           iconSize: [28, 28],
           iconAnchor: [14, 14]
         });

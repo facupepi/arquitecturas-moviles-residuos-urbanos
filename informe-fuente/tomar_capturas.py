@@ -36,11 +36,19 @@ def main():
         page.screenshot(path=p0)
         print("Guardada cap0:", p0)
 
-        # Re-autenticar como Facundo Pepino (Vecino)
+        # Ingreso como vecino
         ayuda_pruebas.ingresar(page, "ciudadano", 2500)
         
         # 1. Vista Ciudadano (Portal Principal)
         page.evaluate("cambiarRol('ciudadano', true)")
+        # dos pedidos del vecino, solo en esta página, para mostrar el seguimiento
+        page.evaluate("""() => {
+            const uid = firebase.auth().currentUser.uid;
+            estadoApp.solicitudes.unshift(
+              { id: 'SOL-SF-118', usuario: 'Vecino', usuarioId: uid, tipo: 'voluminoso', subcategoria: 'Muebles y colchones', cantidad: '1 colchón', direccion: 'Bv. 25 de Mayo 1420', coords: [-31.4262, -62.0868], estado: 'pendiente', cuadrilla: null, fecha: 'Próximo turno', observaciones: 'En la vereda desde las 18 h' },
+              { id: 'SOL-SF-112', usuario: 'Vecino', usuarioId: uid, tipo: 'reciclable', subcategoria: 'Papel y cartón', cantidad: '3 cajas', direccion: 'Bv. 25 de Mayo 1420', coords: [-31.4262, -62.0868], estado: 'en_camino', cuadrilla: 'Cuadrilla Especial - Móvil 03', fecha: 'Hoy', observaciones: '' });
+            renderizarTodo();
+        }""")
         page.wait_for_timeout(600)
         p1 = os.path.join(out_dir, "cap1_portal_ciudadano.png")
         page.evaluate("cerrarToast()"); page.wait_for_timeout(500)
@@ -49,12 +57,9 @@ def main():
         
         # 2. Vista Ciudadano Mapa de Ecopuntos
         page.evaluate("mostrarPantalla('mapa')")
-        page.evaluate("""() => {
-            if (window.marcadoresEcopuntos && window.marcadoresEcopuntos.length > 0) {
-                window.marcadoresEcopuntos[0].openPopup();
-            }
-        }""")
-        page.wait_for_timeout(3000) # tiempo para renderizar teselas Esri
+        page.wait_for_timeout(2500) # tiempo para renderizar teselas Esri
+        page.evaluate("capasPuntos[0].openPopup()")
+        page.wait_for_timeout(1500)
         p2 = os.path.join(out_dir, "cap2_mapa_ecopuntos.png")
         page.evaluate("cerrarToast()"); page.wait_for_timeout(500)
         page.screenshot(path=p2)
@@ -79,7 +84,7 @@ def main():
         print("Guardada cap4:", p4)
         
         # 5. Panel municipal en pantalla de escritorio (menú lateral)
-        ctx2 = browser.new_context(viewport={"width": 1280, "height": 760}, device_scale_factor=1.5)
+        ctx2 = browser.new_context(viewport={"width": 1280, "height": 600}, device_scale_factor=1.5)
         pg2 = ctx2.new_page()
         pg2.goto(file_url, wait_until="load"); pg2.wait_for_timeout(2000)
         ayuda_pruebas.ingresar(pg2, "autoridad", 3500)

@@ -1,0 +1,13 @@
+Prueba de carga y alertas con la pila local (docker compose de esta carpeta), 4/11/2026.
+El generador corre dentro de la red de Docker para no depender de los puertos del equipo anfitrión:
+  docker run --rm --network monitoreo_default -v <repo>/pruebas:/p:ro python:3.12-alpine python /p/prueba_carga.py http://app:8080/index.html 60 60
+
+Resultado del generador:
+  clientes=60 duración=60s peticiones=25936 (432/s) errores=0 p50=129ms p95=214ms p99=273ms
+
+Peticiones por segundo según Prometheus (cada 5 s, rate de 30 s):
+  27, 113, 184, 258, 333, 404, 424, 437, 454, 456, 392, 309, 213, 125, 31, 0
+  Pico: 456 por segundo. Superó 200 por segundo durante menos de un minuto: la advertencia
+  TraficoElevado (más de 200 durante 1 minuto) no llegó a dispararse.
+
+Caída simulada: al detener el exportador de métricas, la alerta InstanciaCaida pasó a disparo a los 45 s.

@@ -1,6 +1,6 @@
 {
   "uid": "residuos-sf",
-  "title": "Gesti\u00f3n de Residuos San Francisco",
+  "title": "Gestión de Residuos San Francisco",
   "schemaVersion": 39,
   "version": 1,
   "refresh": "5s",
@@ -12,7 +12,7 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "R\u00e9plicas activas",
+      "title": "Réplicas activas",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -154,7 +154,8 @@
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "legendFormat": "Peticiones por segundo"
         }
       ],
       "fieldConfig": {
@@ -167,7 +168,7 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Conexiones activas por r\u00e9plica",
+      "title": "Conexiones activas por réplica",
       "gridPos": {
         "x": 12,
         "y": 5,
@@ -185,7 +186,8 @@
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
-          }
+          },
+          "legendFormat": "Réplica {{instance}}"
         }
       ],
       "fieldConfig": {

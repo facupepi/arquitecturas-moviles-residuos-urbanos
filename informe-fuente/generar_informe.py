@@ -51,15 +51,15 @@ CAPTURAS_DIRS = [os.path.join(AQUI, 'capturas')]
 DIAGRAMAS_DIRS = [os.path.join(AQUI, 'diagramas')]
 
 # --------------------------------------------------------------------------- portada
-TITULO_PORTADA = 'CASO DE ESTUDIO'
-SUBTITULO_PORTADA = 'Web Mobile App Gestión Residuos Urbanos'
+TITULO_PORTADA = 'TRABAJO PRÁCTICO'
+SUBTITULO_PORTADA = 'Caso de estudio — Gestión de Residuos Urbanos'
 DATOS_PORTADA = [
     ('Alumnos:', True), ('Pepino, Facundo', False), ('Truchet, Mauricio', False),
     ('Docentes:', True), ('Ing. Bono, Juan Pablo', False),
     ('Asignatura:', True), ('Arquitecturas Móviles', False),
     ('Ciclo Lectivo:', True), ('2026', False),
 ]
-TITULO_DOC = 'Caso de Estudio — Web Mobile App Gestión Residuos Urbanos (San Francisco)'
+TITULO_DOC = 'Trabajo Práctico — Caso de estudio Gestión de Residuos Urbanos (San Francisco)'
 
 EPIGRAFES_DIAGRAMA = {
     'fig1_arquitectura_residuos': 'Arquitectura integral del sistema con separación de responsabilidades y servicios en la nube.',
@@ -419,6 +419,18 @@ class Generador:
                                                           ApplyTo=wdListApplyToWholeList, DefaultListBehavior=2)
             else:
                 rng.ListFormat.ApplyBulletDefault()
+        # Word borra el formato directo que cubre mas de la mitad del parrafo al cambiarle
+        # el estilo (la cursiva de un titulo largo en la bibliografia): se vuelve a aplicar
+        for p, it in zip(ps, items):
+            off = p.Range.Start
+            for t, fm in parse_inline(it):
+                if t and (fm.get("i") or fm.get("b")):
+                    rr = self.doc.Range(off, off + len(t))
+                    if fm.get("i"):
+                        rr.Font.Italic = True
+                    if fm.get("b"):
+                        rr.Font.Bold = True
+                off += len(t)
         for k, p in enumerate(ps):
             f = p.Format
             f.Alignment = wdAlignLeft

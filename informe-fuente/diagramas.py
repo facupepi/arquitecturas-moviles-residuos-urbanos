@@ -2,7 +2,6 @@
 """Generador de diagramas vectoriales de alta definición para el Trabajo Práctico de Gestión de Residuos Urbanos.
 Cátedra: Arquitecturas Móviles - UTN Facultad Regional San Francisco (UTN FRSFCO).
 Docente: Ing. Juan Pablo Bono.
-Autores: Facundo Pepino y Mauricio Truchet.
 """
 import os
 import math
@@ -228,105 +227,122 @@ class Lienzo:
 
 def generar_figura_1():
     """Figura 1: arquitectura del sistema."""
-    W, H = 740, 480
+    W, H = 560, 514
     l = Lienzo(W, H)
     l.rect(0, 0, W, H, relleno=BLANCO)
+    T_TIT, T_TXT = 11.0, 10.0
 
     def caja(x, y, w, h, titulo, detalle, color, fondo, icono_nom):
         l.rect(x, y, w, h, relleno=fondo, borde=color, radio=4, ancho=1.1)
-        l.icono(icono_nom, x + 8, y + 8, color)
-        l.texto(x + 28, y + 18, titulo, F_NEG, 9.2, TINTA)
-        for i, lin in enumerate(partir(detalle, F_REG, 8.2, w - 24)):
-            l.texto(x + 8, y + 33 + i * 11.0, lin, F_REG, 8.2, TEXTO)
+        l.icono(icono_nom, x + 7, y + 7, color)
+        tit = partir(titulo, F_NEG, T_TIT, w - 32)
+        for i, lin in enumerate(tit):
+            l.texto(x + 26, y + 17 + i * 12.5, lin, F_NEG, T_TIT, TINTA)
+        y0 = y + 17 + len(tit) * 12.5 + 3
+        for i, lin in enumerate(partir(detalle, F_REG, T_TXT, w - 14)):
+            l.texto(x + 7, y0 + i * 12.0, lin, F_REG, T_TXT, TEXTO)
 
-    def banda(x, y, w, h, titulo, sub, col):
+    def banda(x, y, w, h, titulo, col):
         l.rect(x, y, w, h, relleno=GRIS_COLUMNA, borde=GRIS_BORDE, radio=6)
-        l.rect(x, y, w, 32, relleno=col, radio=6)
-        l.texto_centrado(x + w / 2, y + 14, titulo, F_NEG, 9.8, BLANCO)
-        l.texto_centrado(x + w / 2, y + 26, sub, F_REG, 8.2, BLANCO)
+        l.rect(x, y, w, 26, relleno=col, radio=6)
+        l.texto_centrado(x + w / 2, y + 17.5, titulo, F_NEG, 11.0, BLANCO)
 
-    izq, der, aw = 12, 428, 300
-    banda(izq, 12, aw, 262, "CLIENTES", "Navegador del celular o de la oficina", VERDE)
-    banda(der, 12, aw, 262, "SERVICIOS EN LA NUBE", "Firebase y mapas abiertos", NARANJA)
+    def rotulo(cx, cy, txt, col):
+        w = largo(txt, F_NEG, 9.6)
+        l.pag.draw_rect(fitz.Rect(cx - w / 2 - 4, cy - 7.5, cx + w / 2 + 4, cy + 7.5), fill=BLANCO, color=col, width=0.7, radius=0.2)
+        l.texto(cx - w / 2, cy + 3.4, txt, F_NEG, 9.6, col)
 
-    caja(izq + 8, 50, aw - 16, 138, "Aplicación web por rol",
-         "El vecino pide retiros y consulta ecopuntos, horarios y campañas. El municipio ve los contenedores en vivo, planifica rutas y atiende incidentes. La cuadrilla recibe su hoja de ruta, escanea códigos QR, valida su ubicación y reporta problemas en la calle.",
+    def flecha(p1, p2, col, txt=None, en=None, doble=False, discontinua=False):
+        l.flecha(p1, p2, color=col, doble=doble, discontinua=discontinua)
+        if txt:
+            cx, cy = en or ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
+            rotulo(cx, cy, txt, col)
+
+    # Clientes y servicios en la nube
+    banda(10, 10, 225, 244, "CELULARES Y NAVEGADORES", VERDE)
+    banda(325, 10, 225, 244, "SERVICIOS EN LA NUBE", NARANJA)
+    caja(18, 44, 209, 128, "Aplicación web por perfil",
+         "El vecino pide retiros y consulta ecopuntos. El municipio sigue los contenedores y despacha rutas. La cuadrilla confirma cada parada con su código.",
          VERDE, VERDE_FONDO, 'telefono')
-    caja(izq + 8, 194, aw - 16, 72, "Service worker y caché",
-         "Abre la aplicación sin conexión y recibe los avisos push con la aplicación cerrada.",
+    caja(18, 180, 209, 66, "Service worker", "Abre la aplicación sin señal y muestra los avisos con la aplicación cerrada.",
          VERDE, VERDE_FONDO, 'carpeta')
+    ys = [44, 96, 148, 200]
+    caja(333, ys[0], 209, 46, "Firebase Authentication", "Ingreso con la cuenta de Google.", NARANJA, NARANJA_FONDO, 'escudo')
+    caja(333, ys[1], 209, 46, "Cloud Firestore", "Datos en vivo y permisos por perfil.", NARANJA, NARANJA_FONDO, 'base')
+    caja(333, ys[2], 209, 46, "Mapas Esri y OSRM", "Plano de la ciudad y recorridos.", NARANJA, NARANJA_FONDO, 'globo')
+    caja(333, ys[3], 209, 46, "Firebase Cloud Messaging", "Entrega de avisos a los celulares.", NARANJA, NARANJA_FONDO, 'enviar')
+    flecha((229, 67), (331, 67), NARANJA, "Ingreso", doble=True)
+    flecha((229, 119), (331, 119), NARANJA, "Datos en vivo", doble=True)
+    flecha((331, 165), (229, 165), NARANJA, "Mapa y rutas", discontinua=True)
+    flecha((331, 223), (229, 213), NARANJA, "Aviso push")
 
-    caja(der + 8, 50, aw - 16, 50, "Firebase Authentication", "Ingreso con la cuenta de Google.", NARANJA, NARANJA_FONDO, 'escudo')
-    caja(der + 8, 106, aw - 16, 50, "Cloud Firestore", "Datos en tiempo real con reglas de seguridad por rol.", NARANJA, NARANJA_FONDO, 'base')
-    caja(der + 8, 162, aw - 16, 50, "Mapas Esri y OSRM", "Mapa de la ciudad y recorridos por las calles.", NARANJA, NARANJA_FONDO, 'globo')
-    caja(der + 8, 218, aw - 16, 50, "Firebase Cloud Messaging", "Avisos push a los celulares.", NARANJA, NARANJA_FONDO, 'enviar')
+    # Infraestructura de la aplicación
+    banda(10, 298, 292, 206, "INFRAESTRUCTURA DE LA APLICACIÓN", AZUL)
+    caja(18, 334, 130, 92, "Kubernetes", "Recibe el tráfico y lo reparte entre réplicas de la imagen Docker.", AZUL, AZUL_FONDO, 'engranaje')
+    caja(178, 334, 116, 92, "Autoescalado", "Suma réplicas al subir la demanda, de 2 a 10.", AZUL, AZUL_FONDO, 'velocimetro')
+    caja(18, 450, 276, 46, "Prometheus y Grafana", "Tablero de métricas y alertas de caída.", PURPURA, PURPURA_FONDO, 'barras')
+    flecha((83, 298), (83, 256), AZUL, "Entrega la aplicación", en=(83, 277))
+    flecha((178, 380), (150, 380), AZUL)
+    flecha((83, 426), (83, 448), PURPURA, "Métricas", en=(132, 438))
 
-    x1, x2 = izq + aw, der
-    l.flecha((x1 - 8, 75), (x2 + 8, 75), color=NARANJA, rotulo="Ingreso", doble=True)
-    l.flecha((x1 - 8, 131), (x2 + 8, 131), color=NARANJA, rotulo="Datos en vivo", doble=True)
-    l.flecha((x1 - 8, 175), (x2 + 8, 187), color=NARANJA, rotulo="Mapa y rutas", doble=True, discontinua=True)
-    l.flecha((x2 + 8, 243), (x1 - 8, 231), color=NARANJA, rotulo="Aviso push")
-
-    banda(12, 292, 716, 176, "INFRAESTRUCTURA PROPIA DEL MUNICIPIO", "Contenedores, orquestación, escalado y monitoreo", AZUL)
-    bw, bh, gx = 220, 62, 20
-    xs = [20, 20 + bw + gx, 20 + 2 * (bw + gx)]
-    filas = [334, 402]
-    caja(xs[0], filas[0], bw, bh, "Imagen Docker", "Servidor Nginx liviano que entrega la aplicación, sin privilegios y con control de salud.", AZUL, AZUL_FONDO, 'servidor')
-    caja(xs[1], filas[0], bw, bh, "Kubernetes", "Mantiene las réplicas de la aplicación y reparte el tráfico entre ellas.", AZUL, AZUL_FONDO, 'engranaje')
-    caja(xs[2], filas[0], bw, bh, "Autoescalado", "Suma réplicas cuando sube la demanda y las retira cuando baja.", AZUL, AZUL_FONDO, 'velocimetro')
-    caja(xs[0], filas[1], bw, bh, "Prometheus y Grafana", "Recolectan las métricas de cada réplica, las muestran en un tablero y emiten alertas.", PURPURA, PURPURA_FONDO, 'barras')
-    caja(xs[1], filas[1], bw, bh, "Sensores de nivel", "Miden el llenado y la temperatura de los contenedores y los envían por MQTT.", CYAN, CYAN_FONDO, 'sensor')
-    caja(xs[2], filas[1], bw, bh, "Emisor de avisos", "Lee los dispositivos registrados y envía los avisos por Firebase Cloud Messaging.", CYAN, CYAN_FONDO, 'enviar')
-
-    l.flecha((izq + aw / 2, 292), (izq + aw / 2, 268), color=AZUL)
+    # Contenedores inteligentes y avisos
+    banda(318, 298, 232, 136, "SENSORES Y AVISOS", CYAN)
+    caja(326, 334, 104, 92, "Mosquitto e ingesta", "Guarda cada lectura en la nube.", CYAN, CYAN_FONDO, 'servidor')
+    caja(438, 334, 104, 92, "Emisor de avisos", "Envía las campañas.", CYAN, CYAN_FONDO, 'enviar')
+    caja(326, 458, 104, 46, "Sensores", "Miden el llenado.", CYAN, CYAN_FONDO, 'sensor')
+    flecha((378, 298), (378, 256), CYAN, "Llenado", en=(378, 277))
+    flecha((490, 298), (490, 256), CYAN, "Avisos", en=(490, 277))
+    flecha((378, 458), (378, 436), CYAN, "Lecturas MQTT", en=(470, 447))
     l.guardar("fig1_arquitectura_residuos")
 
 
 def generar_figura_2():
     """Figura 2: secuencia del circuito de recolección."""
-    W, H = 740, 520
+    W, H = 600, 548
     l = Lienzo(W, H)
     l.rect(0, 0, W, H, relleno=BLANCO)
-    actores = [("Contenedor", "sensor", CYAN, CYAN_FONDO), ("Vecino", "telefono", VERDE, VERDE_FONDO), ("Nube (Firebase)", "nube", NARANJA, NARANJA_FONDO),
-               ("Panel municipal", "escudo", AZUL, AZUL_FONDO), ("Cuadrilla", "camion", VERDE, VERDE_FONDO)]
-    sep = 146
-    xs = [64 + i * sep for i in range(5)]
+    T = 11.0
+    actores = [("Contenedor", "sensor", CYAN, CYAN_FONDO), ("Vecino", "telefono", VERDE, VERDE_FONDO), ("Firebase", "nube", NARANJA, NARANJA_FONDO),
+               ("Municipio", "escudo", AZUL, AZUL_FONDO), ("Cuadrilla", "camion", VERDE, VERDE_FONDO)]
+    sep = 120
+    xs = [60 + i * sep for i in range(5)]
     for (nombre, ico, col, fondo), x in zip(actores, xs):
-        l.rect(x - 56, 12, 112, 34, relleno=fondo, borde=col, radio=4, ancho=1.1)
-        l.icono(ico, x - 50, 22, col)
-        l.texto(x - 32, 33, nombre, F_NEG, 8.4, TINTA)
-        l.pag.draw_line(fitz.Point(x, 46), fitz.Point(x, H - 14), color=GRIS_BORDE, width=1.0, dashes=DISCONTINUA)
+        l.rect(x - 54, 10, 108, 34, relleno=fondo, borde=col, radio=4, ancho=1.1)
+        l.icono(ico, x - 46, 20, col)
+        l.texto(x - 26, 31.5, nombre, F_NEG, T, TINTA)
+        l.pag.draw_line(fitz.Point(x, 44), fitz.Point(x, H - 10), color=GRIS_BORDE, width=1.0, dashes=DISCONTINUA)
 
-    y0, paso = 76, 40
+    y0, paso = 76, 44
 
     def mensaje(n, de, a, texto, col):
         y = y0 + n * paso
-        lineas = partir(f"{n + 1}. {texto}", F_REG, 8.2, max(abs(xs[a] - xs[de]) - 14, 110))
+        lineas = partir(f"{n + 1}. {texto}", F_REG, T, max(abs(xs[a] - xs[de]) - 12, 228))
         for k, lin in enumerate(reversed(lineas)):
-            l.texto_centrado((xs[de] + xs[a]) / 2, y - 5 - k * 10, lin, F_REG, 8.2, TINTA)
+            cx, w = (xs[de] + xs[a]) / 2, largo(lin, F_REG, T)
+            l.pag.draw_rect(fitz.Rect(cx - w / 2 - 3, y - 15 - k * 12.5, cx + w / 2 + 3, y - 2 - k * 12.5), fill=BLANCO, color=None, width=0)
+            l.texto_centrado(cx, y - 5 - k * 12.5, lin, F_REG, T, TINTA)
         d = 4 if xs[a] > xs[de] else -4
         l.flecha((xs[de] + d, y), (xs[a] - d, y), color=col, grosor=1.4)
 
-    def nota(n, de, texto, col, lado=1, ancho=128):
+    def nota(n, x, ancho, texto, col):
         y = y0 + n * paso
-        lineas = partir(f"{n + 1}. {texto}", F_REG, 8.2, ancho - 12)
-        h = len(lineas) * 10.5 + 8
-        x = xs[de] + 6 if lado > 0 else xs[de] - 6 - ancho
+        lineas = partir(f"{n + 1}. {texto}", F_REG, T, ancho - 12)
+        h = len(lineas) * 12.5 + 8
         l.rect(x, y - h / 2, ancho, h, relleno=BLANCO, borde=col, radio=3, ancho=1.0)
         for k, lin in enumerate(lineas):
-            l.texto(x + 6, y - h / 2 + 11 + k * 10.5, lin, F_REG, 8.2, TINTA)
+            l.texto(x + 6, y - h / 2 + 13 + k * 12.5, lin, F_REG, T, TINTA)
 
-    mensaje(0, 0, 2, "Envía el nivel de llenado y la temperatura", CYAN)
-    mensaje(1, 2, 3, "Muestra la alerta de desborde en el panel", NARANJA)
-    mensaje(2, 1, 2, "Registra la solicitud de retiro con su ubicación", VERDE)
-    mensaje(3, 2, 3, "Avisa la solicitud nueva en tiempo real", NARANJA)
-    nota(4, 3, "Calcula la ruta más corta y la traza por las calles", AZUL)
-    mensaje(5, 3, 2, "Asigna las paradas a la cuadrilla elegida", AZUL)
-    mensaje(6, 2, 4, "Entrega la hoja de ruta y envía el aviso push", NARANJA)
-    nota(7, 4, "Llega al punto, escanea el código QR y valida que está a menos de 35 m", VERDE, lado=-1, ancho=150)
-    mensaje(8, 4, 2, "Confirma el retiro con el peso recolectado", VERDE)
-    mensaje(9, 2, 1, "Avisa al vecino que su solicitud se completó", NARANJA)
-    mensaje(10, 2, 3, "Actualiza los indicadores y cierra la alerta", NARANJA)
+    mensaje(0, 0, 2, "Envía el llenado, que la ingesta guarda", CYAN)
+    mensaje(1, 2, 3, "Muestra la alerta de desborde", NARANJA)
+    mensaje(2, 1, 2, "Registra la solicitud de retiro", VERDE)
+    mensaje(3, 2, 3, "Avisa la solicitud nueva al instante", NARANJA)
+    nota(4, xs[3] - 86, 172, "Calcula la ruta más corta y la traza por las calles", AZUL)
+    mensaje(5, 3, 2, "Asigna las paradas a la cuadrilla", AZUL)
+    mensaje(6, 2, 4, "Entrega la hoja de ruta y el aviso push", NARANJA)
+    nota(7, xs[4] - 72, 124, "Escanea el código a menos de 35 metros", VERDE)
+    mensaje(8, 4, 2, "Confirma el retiro con el peso", VERDE)
+    mensaje(9, 2, 1, "Avisa que el retiro se completó", NARANJA)
+    mensaje(10, 2, 3, "Actualiza los indicadores", NARANJA)
     l.guardar("fig2_secuencia_residuos")
 
 

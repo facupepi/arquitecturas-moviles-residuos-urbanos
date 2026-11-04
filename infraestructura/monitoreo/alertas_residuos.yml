@@ -1,0 +1,31 @@
+groups:
+  - name: alertas-gestion-residuos
+    rules:
+      - alert: TasaErrores5xxElevada
+        expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          sistema: gestion-residuos
+        annotations:
+          summary: "Tasa de errores 5xx supera el 5% en San Francisco Web App"
+          description: "La tasa actual de fallos HTTP 5xx es de {{ $value }}% durante más de 2 minutos."
+
+      - alert: LatenciaP95Degradada
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000 > 1500
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 supera los 1500 ms"
+          description: "El percentil 95 de respuesta ciudadana está degradado ({{ $value }} ms)."
+
+      - alert: HPASaturacionReplicasMaximas
+        expr: kube_deployment_status_replicas_available{deployment="gestion-residuos-web"} >= 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "El autoscaler HPA ha alcanzado el límite máximo de 10 réplicas"
+          description: "Evaluar aumento del cupo de réplicas o revisión de carga atípica."
+

@@ -1,0 +1,48 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "solicitudes_residuos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "solicitudes_residuos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "solicitudes_residuos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tipoResiduo", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "incidentes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "gravedad", "order": "DESCENDING" },
+        { "fieldPath": "fechaReporte", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rutas_recoleccion",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "cuadrilla", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
+

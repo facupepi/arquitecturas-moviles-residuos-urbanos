@@ -1,0 +1,6 @@
+{
+  "name": "herramientas-residuos",
+  "private": true,
+  "description": "Compilación de estilos e íconos de la app (npm run iconos / estilos desde app/)",
+  "devDependencies": { "esbuild": "0.24.2", "lucide": "0.469.0" }
+}

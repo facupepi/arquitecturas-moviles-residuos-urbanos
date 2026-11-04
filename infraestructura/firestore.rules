@@ -1,0 +1,135 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funciones auxiliares de autenticación y roles
+    function estaAutenticado() {
+      return request.auth != null;
+    }
+    
+    function tieneRol(rol) {
+      return estaAutenticado() && request.auth.token.rol == rol;
+    }
+    
+    // Un rol se obtiene de dos formas, ambas imposibles de darse a uno mismo:
+    // un claim firmado desde el servidor, o una cuenta de Google con correo verificado asignada por la administración.
+    function cuentaGoogleVerificada() {
+      return estaAutenticado() && request.auth.token.email_verified == true &&
+             request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    // El rol de una cuenta de Google figura en la colección privada roles_por_correo (el id es el correo).
+    // Solo la administración la escribe; cada persona puede leer únicamente su propio documento.
+    function rolDeLaCuenta(rol) {
+      return cuentaGoogleVerificada() &&
+        exists(/databases/$(database)/documents/roles_por_correo/$(request.auth.token.email)) &&
+        get(/databases/$(database)/documents/roles_por_correo/$(request.auth.token.email)).data.rol == rol;
+    }
+
+    function esAutoridad() {
+      return tieneRol('autoridad') || rolDeLaCuenta('autoridad');
+    }
+    
+    function esRecolector() {
+      return tieneRol('recolector') || esAutoridad() || rolDeLaCuenta('recolector');
+    }
+    
+    function esPropietario(usuarioId) {
+      return estaAutenticado() && request.auth.uid == usuarioId;
+    }
+
+    // Colección: Ecopuntos y Puntos Verdes de San Francisco
+    match /ecopuntos/{puntoId} {
+      allow read: if true;
+      allow create, delete: if esAutoridad();
+      allow update: if esRecolector() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['capacidadActual', 'ultimoVaciado', 'ultimoOperadorId'])
+      ) || esAutoridad();
+    }
+
+    // Colección: Solicitudes de recolección de residuos (especiales y vecinales)
+    match /solicitudes_residuos/{solicitudId} {
+      function datosValidosCreacion() {
+        let d = request.resource.data;
+        return d.keys().hasAll(['usuarioId', 'estado', 'tipoResiduo', 'direccion', 'fechaCreacion']) &&
+               d.estado == 'pendiente' &&
+               d.tipoResiduo in ['organico', 'plastico', 'vidrio', 'carton', 'reciclable', 'voluminoso', 'peligroso'] &&
+               d.direccion is string && d.direccion.size() > 5;
+      }
+
+      function datosValidosRecolector() {
+        let d = request.resource.data;
+        return request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['estado', 'fechaRecoleccion', 'recolectorId', 'pesoRealKg', 'qrVerificado']) &&
+               d.estado in ['en_camino', 'recolectado', 'cancelado'] &&
+               (!('pesoRealKg' in d) || (d.pesoRealKg is number && d.pesoRealKg >= 0));
+      }
+
+      allow read: if esAutoridad() || esRecolector() || 
+        (estaAutenticado() && resource.data.usuarioId == request.auth.uid);
+      
+      allow create: if estaAutenticado() && 
+        request.resource.data.usuarioId == request.auth.uid &&
+        datosValidosCreacion();
+      
+      allow update: if (esPropietario(resource.data.usuarioId) &&
+        resource.data.estado == 'pendiente' &&
+        request.resource.data.usuarioId == resource.data.usuarioId) ||
+        esAutoridad() ||
+        (esRecolector() && datosValidosRecolector());
+      
+      allow delete: if esAutoridad();
+    }
+
+    // Colección: Rutas de recolección planificadas
+    match /rutas_recoleccion/{rutaId} {
+      allow read: if esRecolector() || esAutoridad();
+      allow create, delete: if esAutoridad();
+      allow update: if esAutoridad() || esRecolector();
+    }
+
+    // Colección: Incidentes y reclamos urbanos
+    match /incidentes/{incidenteId} {
+      allow read: if true;
+      allow create: if estaAutenticado();
+      allow update, delete: if esAutoridad() || esRecolector();
+    }
+
+    // Colección: Notificaciones push y avisos de campañas
+    match /notificaciones/{notifId} {
+      allow read: if true;
+      allow write: if esAutoridad();
+    }
+
+    // Colección: roles asignados por correo de Google (escritura solo desde administración)
+    match /roles_por_correo/{correo} {
+      allow get: if cuentaGoogleVerificada() && request.auth.token.email == correo;
+      allow list, write: if false;
+    }
+
+    // Colección: Dispositivos registrados para recibir push (el id del documento es el token de FCM)
+    // Solo escriben quienes tienen sesión y a nombre propio; la lectura queda reservada al emisor (administración)
+    match /dispositivos/{tokenId} {
+      allow create, update: if estaAutenticado() &&
+        request.resource.data.keys().hasOnly(['uid', 'rol', 'actualizado']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.rol in ['ciudadano', 'autoridad', 'recolector'];
+      allow delete: if estaAutenticado() && resource.data.uid == request.auth.uid;
+      allow read: if false;
+    }
+
+    // Colección: Telemetría de Contenedores y Sensores IoT
+    match /telemetria_contenedores/{contenedorId} {
+      allow read: if true;
+      // Solo la autoridad publica lecturas (el simulador y la pasarela de sensores usan sus credenciales)
+      allow create, update: if esAutoridad() && request.resource.data.keys().hasOnly(
+          ['dispositivoId', 'nombre', 'porcentajeLlenado', 'temperaturaCelsius',
+           'bateriaPorcentaje', 'alertaDesborde', 'ultimaActualizacion', 'ubicacion',
+           'distanciaSensorCm', 'alertaTemperatura', 'coordsLat', 'coordsLng']) &&
+        (!('porcentajeLlenado' in request.resource.data) ||
+          (request.resource.data.porcentajeLlenado is number &&
+           request.resource.data.porcentajeLlenado >= 0 && request.resource.data.porcentajeLlenado <= 100));
+      allow delete: if esAutoridad();
+    }
+  }
+}

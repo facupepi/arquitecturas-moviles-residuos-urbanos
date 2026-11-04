@@ -1,0 +1,3190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>San Francisco Residuos — Sistema de Gestión Vecinal</title>
+  <meta name="description" content="Sistema Móvil de Gestión de Residuos Urbanos para la Ciudad de San Francisco. UTN FRSFCO.">
+  
+  <!-- Configuración PWA y Plataforma Móvil -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0077ae">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SF Residuos">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  
+  <link rel="preload" href="fonts/quicksand-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+  <!-- Estilos de Tailwind compilados (npm run estilos) -->
+  <link rel="stylesheet" href="estilos.css">
+  <script src="firebase-config.js"></script>
+
+  <!-- Leaflet 1.9.4 y Lucide alojados en el sitio (vendor/): sin conexiones a terceros al arrancar -->
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <script defer src="vendor/leaflet/leaflet.js"></script>
+
+  <!-- Lucide Icons -->
+  <script defer src="vendor/lucide.min.js"></script>
+
+  <!-- Google Firebase SDK v10 (App, Auth, Firestore, Messaging) -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+
+  <style>
+    @font-face {
+      font-family: 'Quicksand';
+      font-style: normal;
+      font-weight: 300 700;
+      font-display: swap;
+      src: url('fonts/quicksand-latin.woff2') format('woff2');
+    }
+    html, body { background: #f4f7fa; }
+    body { font-family: Quicksand, system-ui, Arial, sans-serif; font-weight: 500; -webkit-text-size-adjust: 100%; }
+    :focus-visible { outline: 3px solid #0077ae; outline-offset: 2px; }
+    #mapa-sf {
+      height: 100%;
+      min-height: 380px;
+      width: 100%;
+      z-index: 10;
+    }
+    .leaflet-container { font-family: Quicksand, system-ui, Arial, sans-serif; }
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      padding: 4px;
+      box-shadow: 0 6px 24px rgba(16, 43, 61, 0.2);
+    }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f4f7fa; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #b7c8d6; border-radius: 9999px; }
+    .safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    button, a, select, input { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+    .antetitulo { font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .btn-sec { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; border: 1px solid #b7c8d6;
+      background: #fff; color: #005c88; font-size: 13px; font-weight: 700; transition: background .15s; }
+    .btn-sec:hover { background: #f0f9fe; }
+    .btn-pri { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px;
+      border-radius: 12px; background: #0077ae; color: #fff; font-size: 15px; font-weight: 700; transition: background .15s; }
+    .btn-pri:hover { background: #005c88; }
+    /* Navegación: menú lateral en escritorio, barra inferior en celulares */
+    #badge-online-status { display: none !important; }
+    #menu-lateral { display: none; }
+    .anclaje { scroll-margin-top: 88px; }
+    #slot-mapa-ciudadano > #seccion-mapa-vecino, #slot-mapa-autoridad > #seccion-mapa-vecino, #slot-mapa-recolector > #seccion-mapa-vecino { height: 100%; }
+    @media (min-width: 1024px) {
+      body.autenticado #menu-lateral { display: flex; }
+      body.autenticado main, body.autenticado footer { margin-left: 248px; width: calc(100% - 248px); }
+      body.autenticado main { max-width: none; }
+    }
+    .nav-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 12px;
+      font-size: 14px; font-weight: 600; color: #526174; text-align: left; transition: background .15s, color .15s; }
+    .nav-item:hover { background: #f4f7fa; color: #1e2939; }
+    .nav-item[aria-current="true"] { background: #e0f2fc; color: #005c88; font-weight: 700; }
+    .nav-tab { flex: 1; min-width: 0; min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px; font-size: 11px; font-weight: 600; color: #526174; }
+    .nav-tab .pill { padding: 4px 16px; border-radius: 999px; display: flex; }
+    .nav-tab[aria-current="true"] { color: #005c88; font-weight: 700; }
+    .nav-tab[aria-current="true"] .pill { background: #e0f2fc; }
+    @media (prefers-reduced-motion: reduce) { * { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased flex flex-col min-h-screen pb-16 lg:pb-0">
+
+  <!-- ========================================================== -->
+  <!-- PANTALLA DE INGRESO / AUTENTICACIÓN FORMAL (FIREBASE AUTH) -->
+  <!-- ========================================================== -->
+  <div id="pantalla-ingreso" class="fixed inset-0 z-50 bg-slate-100 flex flex-col overflow-y-auto custom-scroll text-slate-800 px-4 pt-24 pb-8 hidden">
+    <div class="max-w-md w-full mx-auto my-auto">
+      <div class="mb-5">
+        <p class="text-[13px] font-bold tracking-[0.08em] uppercase text-emerald-700">Ciudad limpia y sostenible</p>
+        <h1 class="text-[28px] leading-[34px] font-bold text-slate-800 mt-1">Residuos San Francisco</h1>
+        <p class="text-base text-slate-600 mt-2">Pedí el retiro de residuos especiales, encontrá los ecopuntos y seguí tus solicitudes.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5">
+        <button id="btn-google-login" type="button" onclick="ingresarConGoogle()" class="w-full bg-white hover:bg-slate-50 text-slate-800 font-bold py-3 px-4 rounded-xl text-base flex items-center justify-center gap-3 border border-slate-300 transition min-h-[48px]">
+          <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+          <span>Continuar con Google</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Perfil y Datos de Sesión Activa -->
+  <div id="modal-perfil-usuario" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4 text-slate-800">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-sm flex items-center space-x-2">
+          <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i>
+          <span>Mi perfil</span>
+        </h3>
+        <button onclick="cerrarModal('modal-perfil-usuario')" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar perfil">×</button>
+      </div>
+
+      <div class="flex items-center space-x-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+        <div id="modal-avatar" class="w-11 h-11 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shadow">FP</div>
+        <div>
+          <h4 id="modal-nombre" class="font-bold text-sm leading-tight">Facundo Pepino</h4>
+          <p id="modal-email" class="text-xs text-slate-500">vecino1@ejemplo.invalid</p>
+          <span id="modal-rol-badge" class="inline-block mt-1 text-[12px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Vecino Verificado</span>
+        </div>
+      </div>
+
+      <div class="space-y-1.5 text-xs text-slate-600 bg-slate-50/60 p-3 rounded-xl border border-slate-100">
+        <div class="flex justify-between"><span>DNI:</span> <span id="modal-dni" class="font-semibold text-slate-800">43.218.990</span></div>
+        <div class="flex justify-between"><span>Barrio:</span> <span id="modal-barrio" class="font-semibold text-slate-800">Catedral</span></div>
+        <div class="flex justify-between"><span>Domicilio:</span> <span id="modal-direccion" class="font-semibold text-slate-800">Bv. 25 de Mayo 1420</span></div>
+        <div class="flex justify-between"><span>Puntos ecológicos:</span> <span id="modal-puntos" class="font-black text-emerald-700">34.5 kg</span></div>
+
+      </div>
+
+      <div class="pt-1 flex flex-col gap-2">
+        <button onclick="cerrarModal('modal-perfil-usuario'); cerrarSesion();" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2 px-3 rounded-xl text-xs transition flex items-center justify-center space-x-1.5">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+          <span>Cerrar Sesión</span>
+        </button>
+
+        <button onclick="cerrarModal('modal-perfil-usuario')" class="w-full border border-slate-200 text-slate-600 py-1.5 rounded-xl text-xs hover:bg-slate-50">
+          Volver
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Encabezado institucional -->
+  <header class="bg-sky-700 text-white shadow-md sticky top-0 z-50">
+    <div class="px-4 lg:px-6 h-[60px] lg:h-[72px] flex items-center justify-between gap-3">
+      <a href="#" onclick="window.scrollTo({ top: 0, behavior: 'smooth' }); return false;" class="flex items-center gap-3 min-w-0" aria-label="Residuos San Francisco, ir al inicio">
+        <img src="brand/municipalidad-blanco.png" alt="" class="h-[34px] lg:h-[44px] w-auto hidden min-[340px]:block" width="58" height="34">
+        <span class="hidden min-[340px]:block w-px h-8 bg-white/40"></span>
+        <span class="leading-tight min-w-0">
+          <span class="block text-lg font-bold">Residuos</span>
+          <span class="block text-[13px] font-semibold text-white">San Francisco</span>
+        </span>
+      </a>
+
+      <div class="flex items-center gap-2">
+        <div id="badge-online-status" class="hidden"></div>
+        <div id="header-sesion" class="items-center gap-2" style="display:none">
+          <button id="btn-instalar-pwa" onclick="instalarPWA()" class="hidden text-sm bg-white text-sky-800 font-bold px-3 py-1.5 rounded-full items-center gap-1.5 transition hover:bg-sky-100" title="Instalar la app">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Instalar</span>
+          </button>
+          <button id="btn-toggle-notificaciones" onclick="solicitarPermisoNotificaciones()" class="relative w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/15 transition" aria-label="Activar avisos en el dispositivo" title="Activar avisos en el dispositivo">
+            <i data-lucide="bell" class="w-5 h-5"></i>
+            <span id="punto-avisos" class="hidden absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-sky-700"></span>
+          </button>
+          <div id="badge-rol-header" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 text-sm">
+            <span id="badge-rol-icono"><i data-lucide="user" class="w-4 h-4"></i></span>
+            <span id="badge-rol-texto" class="font-bold text-white">Portal Vecino</span>
+          </div>
+          <div id="perfil-usuario-box" class="flex items-center gap-1">
+            <button onclick="abrirModalPerfil()" class="flex items-center gap-2 rounded-full hover:bg-white/15 transition pr-1 sm:pr-3" title="Ver mi perfil">
+              <span id="avatar-usuario" class="w-9 h-9 rounded-full bg-white text-sky-800 font-bold text-sm flex items-center justify-center">FP</span>
+              <span class="hidden sm:block leading-tight text-left">
+                <span id="nombre-usuario-header" class="text-sm font-bold text-white block">Facundo Pepino</span>
+                <span id="rol-usuario-header" class="text-[12px] text-white block">Vecino</span>
+              </span>
+            </button>
+            <button onclick="cerrarSesion()" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/15 transition" aria-label="Cerrar sesión" title="Cerrar sesión">
+              <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Menú lateral (escritorio): se completa según el rol -->
+  <aside id="menu-lateral" class="fixed left-0 top-[72px] bottom-0 w-[248px] bg-white border-r border-slate-200 flex-col p-3 overflow-y-auto z-30" aria-label="Secciones">
+    <nav id="menu-lateral-items" class="flex flex-col gap-1"></nav>
+  </aside>
+
+  <!-- Banner Offline Flotante -->
+  <div id="banner-offline" class="hidden bg-amber-500 text-slate-950 font-semibold px-4 py-1.5 text-xs text-center shadow-md sticky top-0 z-50 flex items-center justify-center space-x-1.5">
+    <i data-lucide="wifi-off" class="w-3.5 h-3.5"></i>
+    <span>Modo Offline activo: La aplicación almacena los datos en memoria local y sincroniza al reconectar.</span>
+  </div>
+
+  <!-- Banner Instalación PWA (Móvil) -->
+  <div id="banner-instalar-pwa" class="hidden bg-sky-800 text-white px-4 py-2 text-xs flex items-center justify-between shadow-md sticky top-[60px] z-40">
+    <div class="flex items-center space-x-2">
+      <div class="w-6 h-6 rounded bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-300">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+      </div>
+      <div>
+        <span class="font-bold">Instalar San Francisco Residuos</span>
+        <span class="text-[13px] text-emerald-200 block sm:inline sm:ml-1">— Agregá la Web App a tu pantalla de inicio</span>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button onclick="instalarPWA()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow">Instalar</button>
+      <button onclick="document.getElementById('banner-instalar-pwa').classList.add('hidden')" class="text-emerald-300 hover:text-white text-xs px-1">×</button>
+    </div>
+  </div>
+
+  <!-- Banner de notificaciones -->
+  <div id="toast-notificacion" role="status" aria-live="polite" class="fixed bottom-4 right-4 z-50 max-w-sm bg-white rounded-xl shadow-2xl border-l-4 border-emerald-600 p-4 transition-all duration-300 transform translate-y-32 opacity-0 pointer-events-none">
+    <div class="flex items-start space-x-3">
+      <div class="p-2 rounded-lg bg-emerald-50 text-emerald-700">
+        <i data-lucide="bell-ring" class="w-5 h-5"></i>
+      </div>
+      <div class="flex-1">
+        <p id="toast-titulo" class="text-xs font-bold text-slate-800">Aviso Municipal</p>
+        <p id="toast-mensaje" class="text-xs text-slate-600 mt-0.5">Mensaje informativo para la comunidad.</p>
+        <span class="text-[12px] text-slate-400 mt-1 block">Ahora • Residuos Urbanos San Francisco</span>
+      </div>
+      <button onclick="cerrarToast()" class="text-slate-400 hover:text-slate-600 text-xs" aria-label="Cerrar notificación">×</button>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal Dinámico según Rol -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5">
+
+    <!-- ========================================================== -->
+    <!-- VISTA 1: APLICACIÓN CIUDADANA / VECINO                     -->
+    <!-- ========================================================== -->
+    <div id="vista-ciudadano" class="space-y-5 hidden">
+      <!-- Bienvenida y accesos -->
+      <div id="seccion-inicio-vecino" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <p class="antetitulo text-emerald-700">Ciudad limpia y sostenible</p>
+          <h2 class="text-[28px] leading-[34px] font-bold text-slate-800 mt-1">Hola, <span id="saludo-nombre">vecino</span></h2>
+          <p class="text-base text-slate-600 mt-1">¿Qué querés hacer hoy?</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+            <button onclick="abrirModalRegistro('reciclable')" class="flex items-center gap-3 p-3 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 transition text-left min-h-[56px]">
+              <i data-lucide="recycle" class="w-6 h-6 shrink-0"></i>
+              <span class="text-[15px] font-bold leading-tight">Cargar reciclables</span>
+            </button>
+            <button onclick="abrirModalRegistro('voluminoso')" class="flex items-center gap-3 p-3 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 transition text-left min-h-[56px]">
+              <i data-lucide="package" class="w-6 h-6 shrink-0"></i>
+              <span class="text-[15px] font-bold leading-tight">Retiro de voluminosos</span>
+            </button>
+            <button onclick="abrirModalRegistro('peligroso')" class="flex items-center gap-3 p-3 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-700 transition text-left min-h-[56px]">
+              <i data-lucide="alert-triangle" class="w-6 h-6 shrink-0"></i>
+              <span class="text-[15px] font-bold leading-tight">Pilas y electrónicos</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <p class="antetitulo text-slate-600">Tu aporte</p>
+            <div class="text-[32px] leading-[38px] font-bold text-emerald-700 mt-1" id="stat-ciudadano-kilos">34.5 kg</div>
+            <p class="text-sm text-slate-600">de reciclables entregados</p>
+          </div>
+          <p class="text-sm text-slate-600 mt-3 pt-3 border-t border-slate-200">Retiros completados: <span class="font-bold text-slate-800" id="stat-ciudadano-retiros">2 cerrados</span></p>
+        </div>
+      </div>
+
+      <!-- Sección con Mapa de Ecopuntos y Solicitudes del Vecino -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Slot para el Mapa Territorial en Portal Vecino -->
+        <div id="slot-mapa-ciudadano" class="lg:col-span-2">
+          <!-- Mapa Territorial de Ecopuntos, Incidentes y Rutas en San Francisco -->
+          <div id="seccion-mapa-vecino" class="w-full bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+                <span id="mapa-titulo-rol">Ecopuntos en San Francisco</span>
+              </h3>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="centrarEnUbicacionActual()" class="btn-sec">
+                  <i data-lucide="crosshair" class="w-4 h-4"></i>
+                  <span>Mi ubicación</span>
+                </button>
+                <button onclick="ajustarEncuadreCompleto()" class="btn-sec">
+                  <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                  <span>Ver ciudad</span>
+                </button>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-600 mb-3">
+              <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>Ecopunto</span>
+              <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 mr-1.5"></span>Casi lleno</span>
+              <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>Incidente</span>
+            </div>
+
+            <!-- Canvas del Mapa -->
+            <div class="rounded-xl overflow-hidden border border-slate-200 flex-1 relative min-h-[380px]">
+              <div id="mapa-sf"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Lista de Solicitudes y Avisos Municipales -->
+        <div class="space-y-4 flex flex-col">
+          <!-- Mis Solicitudes -->
+          <div id="card-solicitudes-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex-1 flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
+                <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-600"></i>
+                <span>Solicitudes Registradas</span>
+              </h3>
+              <span class="text-[12px] bg-slate-100 text-slate-600 font-medium px-2 py-0.5 rounded-full" id="conteo-solicitudes">3 activas</span>
+            </div>
+            <div class="space-y-2.5 overflow-y-auto max-h-[220px] custom-scroll pr-1" id="lista-solicitudes-vecino">
+              <!-- Renderizado dinámico -->
+            </div>
+          </div>
+
+          <!-- Campañas y Notificaciones de Reciclaje -->
+          <div id="card-campanas-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5 mb-2">
+              <i data-lucide="megaphone" class="w-4 h-4 text-amber-500"></i>
+              <span>Campañas y Alertas de Limpieza</span>
+            </h3>
+            <div class="space-y-2 text-xs" id="lista-campanas-vecino">
+              <!-- Renderizado dinámico -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado de los contenedores (solo lectura para el vecino) -->
+      <div id="card-disponibilidad-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
+            <i data-lucide="recycle" class="w-4 h-4 text-emerald-600"></i>
+            <span>Contenedores cercanos</span>
+          </h3>
+          <span class="text-[13px] text-slate-500">Actualizado en vivo</span>
+        </div>
+        <div id="lista-disponibilidad-vecino" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+      </div>
+
+      <!-- Horarios de recolección domiciliaria por zona -->
+      <div id="card-horarios-vecino" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
+            <i data-lucide="calendar-clock" class="w-4 h-4 text-emerald-600"></i>
+            <span>Horarios de recolección</span>
+          </h3>
+          <span id="zona-vecino-cronograma" class="text-[12px] text-slate-500"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead>
+              <tr class="text-slate-500 border-b border-slate-200">
+                <th class="py-2 pr-3 font-semibold">Zona</th>
+                <th class="py-2 pr-3 font-semibold">Residuos domiciliarios</th>
+                <th class="py-2 pr-3 font-semibold">Reciclables</th>
+                <th class="py-2 font-semibold">Voluminosos y peligrosos</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-cronograma-vecino"></tbody>
+          </table>
+        </div>
+        <p class="text-[12px] text-slate-400 mt-2">Los puntos limpios atienden de lunes a sábado de 8 a 20 h. Los retiros especiales se coordinan con una solicitud previa.</p>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VISTA 2: PANEL DE CONTROL DE AUTORIDADES                   -->
+    <!-- ========================================================== -->
+    <div id="vista-autoridad" class="space-y-5 hidden">
+      <!-- Barra Superior de Métricas Municipales (KPIs) -->
+      <div id="seccion-kpis-muni" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>Solicitudes Pendientes</span>
+            <span class="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="clock" class="w-4 h-4"></i></span>
+          </div>
+          <div class="text-2xl font-black text-slate-800 mt-2" id="kpi-pendientes">4</div>
+          <div class="text-[12px] text-amber-600 font-medium mt-1" id="kpi-pendientes-sub">Esperando asignación</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>Cuadrillas en Calle</span>
+            <span class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="truck" class="w-4 h-4"></i></span>
+          </div>
+          <div class="text-2xl font-black text-slate-800 mt-2" id="kpi-cuadrillas">3</div>
+          <div class="text-[12px] text-blue-600 font-medium mt-1">Rutas activas en San Francisco</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>Incidentes Abiertos</span>
+            <span class="p-1.5 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="alert-octagon" class="w-4 h-4"></i></span>
+          </div>
+          <div class="text-2xl font-black text-slate-800 mt-2" id="kpi-incidentes">2</div>
+          <div class="text-[12px] text-rose-600 font-medium mt-1" id="kpi-incidentes-sub">En vía pública</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>Puntos Limpios Activos</span>
+            <span class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
+          </div>
+          <div class="text-2xl font-black text-emerald-700 mt-2" id="kpi-ecopuntos-activos">5 Operativos</div>
+          <div class="text-[12px] text-emerald-600 font-medium mt-1">100% de la red monitoreada</div>
+        </div>
+      </div>
+
+      <!-- Planificación de Rutas y Mapa Territorial Municipal -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Panel de Asignación y Optimización Inteligente de Rutas -->
+        <div id="planificador-rutas-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+              <i data-lucide="route" class="w-4 h-4 text-muni-600"></i>
+              <span>Planificar rutas</span>
+            </h3>
+          </div>
+          <p class="text-[13px] text-slate-500 leading-normal">
+            Marcá las solicitudes en la lista y calculá la ruta geográficamente más corta para el móvil seleccionado.
+          </p>
+
+          <div class="space-y-2 border border-slate-200 rounded-xl p-3 bg-slate-50">
+            <label class="text-sm font-bold text-slate-700 block">Cuadrilla</label>
+            <select id="select-cuadrilla" class="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-sky-500">
+              <option value="Cuadrilla Norte - Móvil 01">Móvil 01 · Cincuentenario y Urquiza</option>
+              <option value="Cuadrilla Sur - Móvil 02">Móvil 02 · Sarmiento y Universidad</option>
+              <option value="Cuadrilla Especial - Móvil 03" selected>Móvil 03 · Voluminosos y peligrosos</option>
+            </select>
+
+            <button id="btn-optimizar-ruta" onclick="optimizarRutaAutoridad()" class="w-full mt-2 bg-muni-600 hover:bg-muni-700 text-white font-semibold py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 transition shadow">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>Calcular ruta y despachar</span>
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto max-h-[280px] custom-scroll space-y-2 pt-1" id="lista-despacho-autoridad">
+            <!-- Solicitudes para asignar -->
+          </div>
+        </div>
+
+        <!-- Slot para el Mapa Territorial en Panel Municipal -->
+        <div id="slot-mapa-autoridad" class="lg:col-span-2"></div>
+      </div>
+
+      <!-- Consola de Monitoreo de Incidentes Urbanos -->
+      <div id="tabla-incidentes-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+              <i data-lucide="layout-dashboard" class="w-4 h-4 text-muni-600"></i>
+              <span>Incidentes</span>
+            </h3>
+            <button onclick="abrirModalReporteIncidente()" class="text-xs bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 font-semibold px-2.5 py-1 rounded-lg flex items-center space-x-1 transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-sky-700"></i>
+              <span>Registrar incidente</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                  <th class="py-2 px-3 font-semibold">Tipo</th>
+                  <th class="py-2 px-3 font-semibold">Ubicación</th>
+                  <th class="py-2 px-3 font-semibold">Gravedad</th>
+                  <th class="py-2 px-3 font-semibold">Estado</th>
+                  <th class="py-2 px-3 font-semibold text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-incidentes-body" class="divide-y divide-slate-100">
+                <!-- Filas dinámicas -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Difusión de campañas -->
+          <div id="card-campanas-muni" class="mt-4 pt-3 border-t border-slate-200">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold text-slate-700 flex items-center space-x-1">
+                <i data-lucide="send" class="w-3.5 h-3.5 text-muni-600"></i>
+                <span>Enviar un aviso a la comunidad</span>
+              </h4>
+            </div>
+            <div class="flex flex-wrap sm:flex-nowrap gap-2">
+              <input id="input-campana-titulo" type="text" placeholder="Título (ej: Alerta Descacharrado Dengue)" class="w-full sm:w-1/3 text-xs border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500">
+              <input id="input-campana-cuerpo" type="text" placeholder="Mensaje para los vecinos de San Francisco..." class="w-full sm:flex-1 text-xs border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-500">
+              <button onclick="emitirCampanaMunicipal()" class="w-full sm:w-auto bg-sky-700 hover:bg-sky-800 text-white font-semibold px-4 py-2 rounded-lg text-xs flex items-center justify-center space-x-1 transition shadow">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                <span>Difundir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      <!-- ========================================================== -->
+      <!-- SUPERVISIÓN DE CONTENEDORES Y NIVELES DE LLENADO EN VIVO   -->
+      <!-- ========================================================== -->
+      <div id="panel-iot-card" class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-emerald-100 text-emerald-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                En vivo
+              </span>
+            </div>
+            <h3 class="font-bold text-lg text-slate-800 mt-1 flex items-center space-x-2">
+              <i data-lucide="radio" class="w-4 h-4 text-sky-600"></i>
+              <span>Contenedores</span>
+            </h3>
+            <p class="text-sm text-slate-600">Nivel de llenado, temperatura y batería de cada contenedor.</p>
+          </div>
+        </div>
+
+        <!-- Tarjetas de Telemetría de Contenedores -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="grid-telemetria-iot">
+          <!-- Render dinámico de las 5 campanas/contenedores -->
+        </div>
+
+        <!-- Herramientas de sensores (plegadas) -->
+        <details class="group rounded-xl border border-slate-200">
+          <summary class="cursor-pointer select-none px-4 py-3 text-sm font-bold text-slate-700 flex items-center justify-between hover:bg-slate-50 rounded-xl">
+            <span>Herramientas de sensores</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 transition group-open:rotate-180"></i>
+          </summary>
+          <div class="p-4 space-y-4 border-t border-slate-200">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btn-toggle-simulacion-auto" onclick="conmutarSimulacionAutomaticaSensores()" class="text-xs bg-sky-700 hover:bg-sky-800 text-white font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition shadow">
+              <i data-lucide="play" id="icono-sim-auto" class="w-3.5 h-3.5"></i>
+              <span id="txt-sim-auto">Monitoreo Continuo en Vivo</span>
+            </button>
+            <button id="btn-forzar-desborde-ui" onclick="forzarDesbordeInmediato()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition" title="Activar evento de sobrecarga para verificar alarma">
+              <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-rose-600"></i>
+              <span>Alerta de Desborde (96%)</span>
+            </button>
+            <button onclick="normalizarTodosLosContenedores()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition" title="Registrar vaciado operativo tras recolección">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-600"></i>
+              <span>Registrar Vaciado General</span>
+            </button>
+          </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Calibración y Medición de Contenedor -->
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-3">
+            <h4 class="font-bold text-slate-800 flex items-center space-x-1.5">
+              <i data-lucide="sliders" class="w-4 h-4 text-sky-600"></i>
+              <span>Calibración de Sensores</span>
+            </h4>
+            <div>
+              <label class="text-[13px] font-semibold text-slate-600 block mb-1">Seleccionar Contenedor:</label>
+              <select id="sim-mqtt-select" class="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white">
+                <!-- Opciones dinámicas de ecopuntos -->
+              </select>
+            </div>
+            <div>
+              <div class="flex justify-between text-[13px] font-semibold text-slate-600 mb-1">
+                <span>Nivel de Llenado:</span>
+                <span id="sim-mqtt-valor-lbl" class="font-bold text-sky-700">85% (Crítico)</span>
+              </div>
+              <input id="sim-mqtt-slider" type="range" min="10" max="100" value="85" oninput="document.getElementById('sim-mqtt-valor-lbl').innerText = this.value + '%'" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <button id="btn-preset-40" onclick="setSimMqttPreset(40)" class="text-[12px] bg-white border border-slate-200 hover:bg-slate-100 px-2 py-1 rounded font-medium text-slate-700">40% Normal</button>
+              <button id="btn-preset-78" onclick="setSimMqttPreset(78)" class="text-[12px] bg-amber-50 border border-amber-200 hover:bg-amber-100 px-2 py-1 rounded font-medium text-amber-800">78% Alerta</button>
+              <button id="btn-preset-95" onclick="setSimMqttPreset(95)" class="text-[12px] bg-rose-50 border border-rose-200 hover:bg-rose-100 px-2 py-1 rounded font-bold text-rose-700">95% Crítico</button>
+            </div>
+            <button id="btn-publicar-telemetria" onclick="ejecutarPublicacionMQTTSimulada()" class="w-full mt-2 bg-sky-700 hover:bg-sky-800 text-white font-semibold py-2 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 transition shadow">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Registrar Nivel de Llenado</span>
+            </button>
+          </div>
+
+          <!-- Historial de Actividad en Tiempo Real -->
+          <div class="lg:col-span-2 bg-slate-900 rounded-xl p-3 text-white flex flex-col text-[13px] shadow-inner">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-400 text-[12px]">
+              <span class="flex items-center space-x-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-semibold text-slate-200">Historial de Actividad en Vivo</span>
+              </span>
+              <button onclick="limpiarConsolaMQTT()" class="text-slate-400 hover:text-white transition">Limpiar</button>
+            </div>
+            <div id="consola-mqtt-log" class="mt-2 space-y-1.5 overflow-y-auto max-h-[160px] custom-scroll pr-1 text-slate-300">
+              <!-- Logs dinámicos -->
+            </div>
+          </div>
+        </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VISTA 3: APLICACIÓN PARA PERSONAL DE RECOLECCIÓN           -->
+    <!-- ========================================================== -->
+    <div id="vista-recolector" class="space-y-5 hidden">
+      <!-- Resumen operativo del turno -->
+      <div id="kpis-cuadrilla" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-xs text-slate-500">Paradas Pendientes</span>
+          <p id="kpi-cuad-paradas" class="text-2xl font-black text-slate-800 mt-1">0</p>
+          <span class="text-[13px] text-orange-600">en la hoja de ruta de hoy</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-xs text-slate-500">Contenedores Urgentes</span>
+          <p id="kpi-cuad-urgentes" class="text-2xl font-black text-rose-600 mt-1">0</p>
+          <span class="text-[13px] text-rose-600">con llenado de 80% o más</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-xs text-slate-500">Retiros a Domicilio</span>
+          <p id="kpi-cuad-retiros" class="text-2xl font-black text-slate-800 mt-1">0</p>
+          <span class="text-[13px] text-slate-500">asignados a tu móvil</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-xs text-slate-500">Kilos Recolectados</span>
+          <p id="kpi-cuad-kilos" class="text-2xl font-black text-emerald-700 mt-1">0 kg</p>
+          <span class="text-[13px] text-emerald-700">registrados en el turno</span>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p class="antetitulo text-orange-700">Móvil 03 · Cuadrilla especial</p>
+          <h2 class="text-[22px] leading-[30px] font-bold text-slate-800 mt-0.5">Hoja de ruta de hoy</h2>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-abrir-scanner-qr" onclick="abrirModalScannerQR()" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-[15px] transition">
+            <i data-lucide="qr-code" class="w-5 h-5"></i>
+            <span>Escanear código</span>
+          </button>
+          <button onclick="abrirModalReporteIncidente()" class="btn-sec min-h-[44px] !px-4">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+            <span>Reportar problema</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Rutas Asignadas y Detalle de Paradas con Mapa Territorial -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div id="seccion-paradas-cuadrilla" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+              <i data-lucide="list-ordered" class="w-4 h-4 text-orange-600"></i>
+              <span>Paradas Asignadas Hoy</span>
+            </h3>
+            <span class="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-0.5 rounded-full" id="conteo-paradas-recolector">4 restantes</span>
+          </div>
+          <div class="space-y-2.5 overflow-y-auto max-h-[380px] custom-scroll pr-1" id="lista-paradas-recolector">
+            <!-- Renderizado dinámico -->
+          </div>
+        </div>
+
+        <!-- Slot para el Mapa Territorial en Módulo de Cuadrilla -->
+        <div id="slot-mapa-recolector" class="lg:col-span-2"></div>
+      </div>
+
+      <!-- Módulo de Confirmación Operativa y Escáner Rápido -->
+      <div id="card-confirmacion-cuadrilla" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+              <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                <span>Confirmar parada</span>
+              </h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <h4 class="text-xs font-bold text-slate-700">1. Código del punto</h4>
+                <div class="flex gap-2">
+                  <input id="input-qr-manual" type="text" placeholder="Ej: ECO-SF-001" class="flex-1 text-xs border border-slate-300 rounded-lg p-2 font-mono uppercase bg-white">
+                  <button onclick="validarIdentificadorQR(document.getElementById('input-qr-manual').value)" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-semibold">
+                    Validar
+                  </button>
+                </div>
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                  <span class="text-[12px] text-slate-500">Accesos rápidos:</span>
+                  <button onclick="document.getElementById('input-qr-manual').value='ECO-SF-001'; validarIdentificadorQR('ECO-SF-001')" class="text-[12px] bg-white border border-slate-200 hover:bg-slate-100 px-1.5 py-0.5 rounded font-mono">ECO-SF-001 (Plaza Cívica)</button>
+                  <button onclick="document.getElementById('input-qr-manual').value='ECO-SF-004'; validarIdentificadorQR('ECO-SF-004')" class="text-[12px] bg-white border border-slate-200 hover:bg-slate-100 px-1.5 py-0.5 rounded font-mono">ECO-SF-004 (UTN FRSFCO)</button>
+                  <button onclick="document.getElementById('input-qr-manual').value='SOL-SF-102'; validarIdentificadorQR('SOL-SF-102')" class="text-[12px] bg-white border border-slate-200 hover:bg-slate-100 px-1.5 py-0.5 rounded font-mono">SOL-SF-102 (Voluminoso)</button>
+                </div>
+              </div>
+
+              <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <h4 class="text-xs font-bold text-slate-700">2. Peso y observaciones</h4>
+                <div class="flex gap-2 items-center">
+                  <input id="input-pesaje-recolector" type="number" min="0" step="0.5" placeholder="Peso en kg" class="w-32 text-xs border border-slate-300 rounded-lg p-2 bg-white">
+                </div>
+                <textarea id="input-notas-recolector" rows="2" placeholder="Observaciones del retiro (ej: colocado en bolsas especiales)..." class="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white"></textarea>
+              </div>
+            </div>
+
+            <!-- Resumen del Punto Validado -->
+            <div id="box-punto-validado" class="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl hidden">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
+                <span class="text-xs font-bold text-emerald-900" id="txt-punto-validado-nombre">Punto Validado: Ecopunto Plaza Cívica</span>
+              </div>
+              <p class="text-[13px] text-emerald-700 mt-1" id="txt-punto-validado-detalle">Ubicación verificada por geocerca en San Francisco.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end space-x-2">
+            <button onclick="confirmarRecoleccionEnTerritorio()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center space-x-2 shadow transition">
+              <i data-lucide="check-check" class="w-4 h-4"></i>
+              <span>Confirmar recolección</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================== -->
+  <!-- MODALES INTERACTIVOS                                      -->
+  <!-- ========================================================== -->
+
+  <!-- Modal: Registro de Residuos Ciudadanos -->
+  <div id="modal-registro" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-600"></i>
+          <span>Solicitud de Retiro de Residuos</span>
+        </h3>
+        <button onclick="cerrarModal('modal-registro')" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar modal">×</button>
+      </div>
+
+      <form id="form-registro-residuo" onsubmit="guardarRegistroResiduo(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Tipo de Residuo:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="border rounded-xl p-2.5 text-center cursor-pointer hover:border-emerald-500 transition flex flex-col items-center">
+              <input type="radio" name="tipo_residuo" value="reciclable" checked onchange="actualizarSubcategoriasFormulario('reciclable')" class="text-emerald-600 mb-1">
+              <span class="font-semibold text-slate-800">Reciclable</span>
+              <span class="text-[12px] text-slate-400">Cartón, plástico, vidrio</span>
+            </label>
+            <label class="border rounded-xl p-2.5 text-center cursor-pointer hover:border-emerald-500 transition flex flex-col items-center">
+              <input type="radio" name="tipo_residuo" value="voluminoso" onchange="actualizarSubcategoriasFormulario('voluminoso')" class="text-emerald-600 mb-1">
+              <span class="font-semibold text-slate-800">Voluminoso</span>
+              <span class="text-[12px] text-slate-400">Poda, escombros, muebles</span>
+            </label>
+            <label class="border rounded-xl p-2.5 text-center cursor-pointer hover:border-emerald-500 transition flex flex-col items-center">
+              <input type="radio" name="tipo_residuo" value="peligroso" onchange="actualizarSubcategoriasFormulario('peligroso')" class="text-emerald-600 mb-1">
+              <span class="font-semibold text-slate-800">Peligroso / RAEE</span>
+              <span class="text-[12px] text-slate-400">Pilas, aceites, electrónica</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Detalle o Categoría Específica:</label>
+          <select id="reg-subcategoria" class="w-full border border-slate-300 rounded-lg p-2 bg-white focus:ring-2 focus:ring-emerald-500">
+            <!-- Llenado dinámicamente -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Cantidad Estimada:</label>
+            <input id="reg-cantidad" type="text" required placeholder="Ej: 3 bolsas / 10 kg / 1 m³" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Fecha de Retiro Sugerida:</label>
+            <input id="reg-fecha" type="date" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700">Dirección en San Francisco:</label>
+            <button type="button" onclick="obtenerUbicacionGPS()" class="text-[13px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded border border-emerald-300 flex items-center space-x-1">
+              <i data-lucide="crosshair" class="w-3 h-3"></i>
+              <span id="txt-gps-btn">Usar mi GPS</span>
+            </button>
+          </div>
+          <input id="reg-direccion" type="text" required placeholder="Ej: Bv. 25 de Mayo 1420, San Francisco" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500">
+          <p id="info-gps-detectado" class="text-[12px] text-emerald-600 mt-1 hidden"></p>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Observaciones o Indicaciones de Acceso:</label>
+          <textarea id="reg-observaciones" rows="2" placeholder="Ej: Dejar en canasto de vereda frente al portón negro..." class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModal('modal-registro')" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow transition flex items-center space-x-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Enviar solicitud</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Escáner QR de Contenedor (Cámara Real con Html5Qrcode + Fallback) -->
+  <div id="modal-scanner" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-4 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+          <i data-lucide="camera" class="w-4 h-4 text-orange-600"></i>
+          <span>Escáner QR de Punto Limpio</span>
+        </h3>
+        <button onclick="cerrarModalScanner()" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar escáner">×</button>
+      </div>
+
+      <div id="qr-reader" class="rounded-xl overflow-hidden bg-black text-center text-white min-h-[220px] flex items-center justify-center">
+        <!-- Render dinámico Html5Qrcode -->
+      </div>
+
+      <div class="text-center pt-2">
+        <p class="text-[13px] text-slate-500 mb-2">Puntos frecuentes de verificación:</p>
+        <div class="flex flex-wrap gap-1.5 justify-center">
+          <button id="btn-qr-plaza-civica" onclick="procesarLecturaQR('ECO-SF-001')" class="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-xs px-2 py-1 rounded font-medium">Plaza Cívica</button>
+          <button onclick="procesarLecturaQR('ECO-SF-004')" class="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs px-2 py-1 rounded font-medium">UTN FRSFCO</button>
+          <button onclick="procesarLecturaQR('SOL-SF-102')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 text-xs px-2 py-1 rounded font-medium">Retiro Domicilio #102</button>
+          <button onclick="procesarLecturaQR('COD-INVALIDO-999')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs px-2 py-1 rounded font-medium">Código No Registrado</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Reportar Incidente en Vía Pública -->
+  <div id="modal-incidente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+          <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
+          <span>Reporte de Incidente en el Servicio</span>
+        </h3>
+        <button onclick="cerrarModal('modal-incidente')" class="text-slate-400 hover:text-slate-600" aria-label="Cerrar reporte">×</button>
+      </div>
+
+      <form onsubmit="guardarIncidenteOperativo(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Tipo de Anomalía:</label>
+          <select id="inc-tipo" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+            <option value="Contenedor Desbordado">Contenedor Desbordado (>100%)</option>
+            <option value="Contenedor Dañado / Vandalizado">Contenedor Dañado / Roto</option>
+            <option value="Microbasural Clandestino">Microbasural Clandestino en Terreno</option>
+            <option value="Obstrucción de Tránsito para el Camión">Obstrucción de Tránsito en la Calle</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Nivel de Gravedad:</label>
+          <select id="inc-gravedad" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+            <option value="alta">Alta — Requiere intervención en el día</option>
+            <option value="media" selected>Media — Planificar para próximo turno</option>
+            <option value="baja">Baja — Mantenimiento preventivo</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Ubicación / Calle:</label>
+          <input id="inc-ubicacion" type="text" required placeholder="Ej: Av. Urquiza esq. Iturraspe" class="w-full border border-slate-300 rounded-lg p-2">
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Descripción del Problema:</label>
+          <textarea id="inc-descripcion" rows="2" placeholder="Detalle lo sucedido para el centro de control..." class="w-full border border-slate-300 rounded-lg p-2"></textarea>
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="cerrarModal('modal-incidente')" class="px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg shadow">Reportar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Barra de Navegación Inferior Mobile Contextual por Rol -->
+  <nav id="bottom-nav-bar" class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 safe-area-pb lg:hidden" style="box-shadow: 0 -2px 10px rgba(30,41,57,.08)" aria-label="Accesos rápidos">
+    <div id="bottom-nav-items" class="flex"></div>
+  </nav>
+
+  <footer class="bg-slate-900 text-slate-300 text-[13px] py-4 px-4 mt-8 text-center">
+    <span class="text-slate-400">Facundo Pepino y Mauricio Truchet</span>
+  </footer>
+
+  <!-- Lógica JavaScript de la Aplicación -->
+  <script>
+    const STORAGE_KEY = 'SF_RESIDUOS_STATE_V6';
+    const COORDS_SF = [-31.4290, -62.0820]; // Centro Cívico / Plaza Cívica de San Francisco (Córdoba)
+
+    // Datos semilla iniciales auditados y georreferenciados en San Francisco, Córdoba
+    const DATOS_SEMILLA = {
+      rolActual: 'ciudadano',
+      usuariosRegistrados: [
+        {
+          id: 'USR-SF-001',
+          nombre: 'Facundo Pepino',
+          email: 'vecino1@ejemplo.invalid',
+          rol: 'ciudadano',
+          dni: '43.218.990',
+          telefono: '+54 3564 456789',
+          barrio: 'Catedral',
+          direccion: 'Bv. 25 de Mayo 1420',
+          puntosEco: 34.5
+        },
+        {
+          id: 'USR-SF-002',
+          nombre: 'Mauricio Truchet',
+          email: 'vecino2@ejemplo.invalid',
+          rol: 'ciudadano',
+          dni: '42.980.123',
+          telefono: '+54 3564 654321',
+          barrio: 'Hospital',
+          direccion: 'Bv. 25 de Mayo 1950',
+          puntosEco: 28.0
+        },
+        {
+          id: 'USR-SF-003',
+          nombre: 'Dirección de Servicios Públicos',
+          email: 'autoridad@ejemplo.invalid',
+          rol: 'autoridad',
+          dni: '22.450.811',
+          telefono: '+54 3564 439111',
+          cargo: 'Director de Servicios y Medio Ambiente',
+          barrio: 'Centro',
+          direccion: 'Palacio Municipal - Bv. 9 de Julio 1187'
+        },
+        {
+          id: 'USR-SF-004',
+          nombre: 'Cuadrilla 03 (Turno Tarde)',
+          email: 'cuadrilla@ejemplo.invalid',
+          rol: 'recolector',
+          dni: '35.789.123',
+          telefono: '+54 3564 512345',
+          unidad: 'Camión Compactador Mercedes Benz Atego #03',
+          barrio: 'Corralón Municipal',
+          direccion: 'Cervantes y Caseros'
+        }
+      ],
+      ecopuntos: [
+        { id: 'ECO-SF-001', sensorId: 'SF-IOT-001', nombre: 'Ecopunto Plaza Cívica', direccion: 'Bv. 25 de Mayo y Av. Libertador Norte', coords: [-31.4288, -62.0825], tipo: 'Campana Verde Triple', capacidad: 45, temperatura: 22.4, bateria: 95, horario: 'Lun-Sáb 8-20h', materiales: ['Plástico', 'Vidrio', 'Papel'] },
+        { id: 'ECO-SF-002', sensorId: 'SF-IOT-002', nombre: 'Ecopunto Parque Cincuentenario', direccion: 'Av. Urquiza y Bv. Roca', coords: [-31.4254, -62.0684], tipo: 'Punto Limpio Vecinal', capacidad: 80, temperatura: 24.1, bateria: 88, horario: 'Todos los días 24h', materiales: ['Plástico', 'Metal', 'Cartón'] },
+        { id: 'ECO-SF-003', sensorId: 'SF-IOT-003', nombre: 'Ecopunto Paseo Cervantes', direccion: 'Av. Cervantes y Caseros', coords: [-31.4283, -62.0985], tipo: 'Campana de Reciclaje', capacidad: 30, temperatura: 21.0, bateria: 98, horario: 'Todos los días 24h', materiales: ['Vidrio', 'Aluminio'] },
+        { id: 'ECO-SF-004', sensorId: 'SF-IOT-004', nombre: 'Punto Verde UTN FRSFCO', direccion: 'Av. de la Universidad 501', coords: [-31.4205, -62.1110], tipo: 'Centro Tecnológico RAEE', capacidad: 25, temperatura: 20.5, bateria: 91, horario: 'Lun-Vie 8-22h', materiales: ['Pilas', 'Baterías', 'Electrónica'] },
+        { id: 'ECO-SF-005', sensorId: 'SF-IOT-005', nombre: 'Ecopunto Barrio Sarmiento', direccion: 'López y Planes 950', coords: [-31.4396, -62.0786], tipo: 'Punto Limpio Barrial', capacidad: 90, temperatura: 25.8, bateria: 82, horario: 'Lun-Sáb 8-19h', materiales: ['Orgánicos', 'Secos'] },
+      ],
+      solicitudes: [
+        { id: 'SOL-SF-101', usuario: 'Facundo Pepino', tipo: 'reciclable', subcategoria: 'Papel y Cartón Ondulado', cantidad: '4 cajas grandes', direccion: 'Av. Libertador Norte 450', coords: [-31.4204, -62.0830], estado: 'en_camino', cuadrilla: 'Cuadrilla Especial - Móvil 03', fecha: '2026-11-02', observaciones: 'Dejar junto a puerta lateral' },
+        { id: 'SOL-SF-102', usuario: 'Mauricio Truchet', tipo: 'voluminoso', subcategoria: 'Restos de Poda y Ramas', cantidad: '2 m³ en vereda', direccion: 'Bv. 25 de Mayo 1950', coords: [-31.4284, -62.0915], estado: 'pendiente', cuadrilla: null, fecha: '2026-11-02', observaciones: 'Atado en fardos' },
+        { id: 'SOL-SF-103', usuario: 'Lucía Rossi', tipo: 'peligroso', subcategoria: 'Pilas y Baterías en Desuso', cantidad: '20 unidades', direccion: 'Av. Urquiza 780', coords: [-31.4205, -62.0952], estado: 'pendiente', cuadrilla: null, fecha: '2026-11-02', observaciones: 'Botella plástica sellada' },
+        { id: 'SOL-SF-104', usuario: 'Carlos Benítez', tipo: 'reciclable', subcategoria: 'Vidrio y Frascos', cantidad: '2 canastos', direccion: 'Castelli 1200', coords: [-31.4225, -62.0845], estado: 'recolectado', cuadrilla: 'Cuadrilla Norte - Móvil 01', fecha: '2026-11-01', observaciones: 'Limpio y seco' },
+      ],
+      incidentes: [
+        { id: 'INC-SF-01', tipo: 'Contenedor Desbordado', ubicacion: 'Av. Urquiza y Cervantes', coords: [-31.4280, -62.0955], gravedad: 'alta', estado: 'en_atencion', fecha: 'Hoy 14:30', descripcion: 'Residuos desbordados alrededor de la campana.' },
+        { id: 'INC-SF-02', tipo: 'Contenedor Dañado / Roto', ubicacion: 'Parque Cincuentenario (Sector Este)', coords: [-31.4258, -62.0678], gravedad: 'media', estado: 'abierto', fecha: 'Hoy 16:15', descripcion: 'Tapa plástica partida.' },
+      ],
+      campanas: [
+        { id: 'CMP-01', titulo: 'Campaña Contra el Dengue: Descacharrado', desc: 'Retiro especial de recipientes y chatarra en Barrio Hospital y Catedral este jueves.', fecha: 'Jueves 5 Nov' },
+        { id: 'CMP-02', titulo: 'EcoCanje en Plaza Cívica', desc: 'Acercá 5 kg de reciclables secos y llevate compost orgánico municipal.', fecha: 'Sábado 7 Nov' },
+      ],
+      kilosRecolectadosUsuario: 34.5
+    };
+
+    let estadoApp = cargarDesdeLocalStorage() || JSON.parse(JSON.stringify(DATOS_SEMILLA));
+    window.estadoApp = estadoApp;
+    window.COORDS_SF = COORDS_SF;
+    window.STORAGE_KEY = STORAGE_KEY;
+
+    let mapaInstance = null;
+    let capasPuntos = [];
+    let capaRutaPolilinea = null;
+    let scannerInstancia = null;
+
+    // Sanitización anti-XSS
+    function escapeHTML(texto) {
+      if (!texto) return '';
+      return String(texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Persistencia LocalStorage con validación de versión y coordenadas reales
+    function cargarDesdeLocalStorage() {
+      ['SF_RESIDUOS_STATE_V1', 'SF_RESIDUOS_STATE_V2', 'SF_RESIDUOS_STATE_V3', 'SF_RESIDUOS_STATE_V4', 'SF_RESIDUOS_STATE_V5'].forEach(k => {
+        try { localStorage.removeItem(k); } catch(e){}
+      });
+      const guardado = localStorage.getItem(STORAGE_KEY);
+      if (guardado) {
+        try {
+          const parsed = JSON.parse(guardado);
+          // Validar que tenga las coordenadas auditadas de San Francisco (UTN ~ -31.4205)
+          const utn = parsed.ecopuntos?.find(e => e.id === 'ECO-SF-004');
+          if (utn && utn.coords && Math.abs(utn.coords[0] - (-31.4205)) < 0.005) {
+            return parsed;
+          }
+        }
+        catch (e) { console.error('Error parseando localStorage:', e); }
+      }
+      return null;
+    }
+
+    function guardarEnLocalStorage() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(estadoApp)); }
+      catch (e) { console.error('Error guardando en localStorage:', e); }
+    }
+
+    // =========================================================================
+    // CAPACIDADES NATIVAS MOBILE: GPS, VIBRACIÓN, NOTIFICACIONES Y PWA
+    // =========================================================================
+
+    let gpsDetectado = null;
+    let marcadorUsuarioGPS = null;
+    let deferredPrompt = null;
+
+    // Feedback Háptico / Vibración
+    function vibrar(patron = 20) {
+      if ('vibrate' in navigator) {
+        try { navigator.vibrate(patron); } catch (e) {}
+      }
+    }
+
+    // Geolocalización satelital para el vecino
+    function obtenerUbicacionGPS() {
+      vibrar(20);
+      const infoEl = document.getElementById('info-gps-detectado');
+      const btnTxt = document.getElementById('txt-gps-btn');
+      const inputDir = document.getElementById('reg-direccion');
+      if (btnTxt) btnTxt.innerText = 'Detectando...';
+
+      if (!navigator.geolocation) {
+        gpsDetectado = [-31.4290, -62.0820];
+        if (btnTxt) btnTxt.innerText = 'San Francisco';
+        if (infoEl) {
+          infoEl.innerText = 'Ubicación estimada: Centro Cívico (-31.4290, -62.0820)';
+          infoEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          gpsDetectado = [pos.coords.latitude, pos.coords.longitude];
+          if (infoEl) {
+            infoEl.innerText = `GPS de precisión: ±${Math.round(pos.coords.accuracy)}m (${gpsDetectado[0].toFixed(4)}, ${gpsDetectado[1].toFixed(4)})`;
+            infoEl.classList.remove('hidden');
+          }
+          if (btnTxt) btnTxt.innerText = 'GPS Conectado';
+          if (inputDir && !inputDir.value.trim()) {
+            inputDir.value = `Ubicación GPS (${gpsDetectado[0].toFixed(4)}, ${gpsDetectado[1].toFixed(4)}), San Francisco`;
+          }
+          vibrar([30, 40]);
+          mostrarToast('Ubicación Obtenida', `Coordenadas satelitales registradas con éxito.`);
+        },
+        (err) => {
+          gpsDetectado = [-31.4290 + (Math.random() - 0.5) * 0.01, -62.0820 + (Math.random() - 0.5) * 0.01];
+          if (infoEl) {
+            infoEl.innerText = `GPS en San Francisco: (${gpsDetectado[0].toFixed(4)}, ${gpsDetectado[1].toFixed(4)})`;
+            infoEl.classList.remove('hidden');
+          }
+          if (btnTxt) btnTxt.innerText = 'San Francisco';
+          if (inputDir && !inputDir.value.trim()) {
+            inputDir.value = 'Barrio Catedral / Centro, San Francisco';
+          }
+          mostrarToast('Ubicación Asignada', 'Se fijó la posición geográfica en San Francisco.');
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+
+    // Centrar mapa en la ubicación del dispositivo móvil
+    function centrarEnUbicacionActual() {
+      vibrar(25);
+      if (!mapaInstance) return;
+
+      if (!navigator.geolocation) {
+        mapaInstance.setView(COORDS_SF, 15);
+        mostrarToast('Plaza Cívica SF', 'Vista centrada en el centro neurálgico de la ciudad.');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          mapaInstance.setView([lat, lng], 16);
+          if (marcadorUsuarioGPS) mapaInstance.removeLayer(marcadorUsuarioGPS);
+          marcadorUsuarioGPS = L.circleMarker([lat, lng], {
+            radius: 10,
+            fillColor: '#0284c7',
+            color: '#ffffff',
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 0.95
+          }).addTo(mapaInstance).bindPopup('<b>Tu Ubicación Actual</b><br>Dispositivo móvil georreferenciado').openPopup();
+          vibrar([30, 40]);
+          mostrarToast('GPS Localizado', `Precisión móvil: ±${Math.round(pos.coords.accuracy)} metros.`);
+        },
+        (err) => {
+          mapaInstance.setView(COORDS_SF, 15);
+          mostrarToast('Ubicación Centrada', 'Centrado en Plaza Cívica de San Francisco.');
+        },
+        { enableHighAccuracy: true, timeout: 4000 }
+      );
+    }
+
+    // Solicitud y gestión de Notificaciones Push Web
+    function solicitarPermisoNotificaciones() {
+      vibrar(20);
+      if (!('Notification' in window)) {
+        mostrarToast('Notificaciones no soportadas', 'Este navegador no admite la API Web Notifications.');
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        mostrarToast('Notificaciones Activas', 'Los avisos push nativos ya están autorizados.');
+        actualizarBotonNotificaciones();
+        registrarPushFCM();
+        return;
+      }
+      Notification.requestPermission().then((permission) => {
+        actualizarBotonNotificaciones();
+        if (permission === 'granted') {
+          vibrar([30, 50, 30]);
+          dispararNotificacionNativa('Notificaciones Habilitadas', 'Recibirás avisos sobre recolección y campañas ambientales.');
+          mostrarToast('Permiso Concedido', 'Notificaciones del sistema operativo activadas.');
+          registrarPushFCM();
+        } else {
+          mostrarToast('Permiso Rechazado', 'Podés cambiar la configuración en los permisos del navegador.');
+        }
+      });
+    }
+
+    function actualizarBotonNotificaciones() {
+      const btn = document.getElementById('btn-toggle-notificaciones');
+      if (!btn) return;
+      const activo = 'Notification' in window && Notification.permission === 'granted';
+      const punto = document.getElementById('punto-avisos');
+      if (punto) punto.classList.toggle('hidden', !activo);
+      const texto = activo ? 'Avisos del dispositivo activados' : 'Activar avisos en el dispositivo';
+      btn.title = texto;
+      btn.setAttribute('aria-label', texto);
+    }
+
+    function dispararNotificacionNativa(titulo, cuerpo) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(titulo, {
+            body: cuerpo,
+            icon: 'icons/icon-192.png',
+            badge: 'icons/icon-192.png'
+          });
+        } catch (e) {
+          if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then((reg) => {
+              reg.showNotification(titulo, {
+                body: cuerpo,
+                icon: 'icons/icon-192.png',
+                badge: 'icons/icon-192.png'
+              });
+            });
+          }
+        }
+      }
+    }
+
+    // Push con la app cerrada (Firebase Cloud Messaging): el dispositivo se registra con su token y
+    // el emisor (infraestructura/notificaciones/enviar_push.py) lo usa para avisarle aunque la app no esté abierta
+    let tokenPush = null;
+
+    // Una sola solicitud de token a la vez: dos llamadas simultáneas a getToken se invalidan entre sí
+    let registroPushEnCurso = null;
+    function registrarPushFCM() {
+      if (!registroPushEnCurso) registroPushEnCurso = obtenerYGuardarTokenPush().finally(() => { registroPushEnCurso = null; });
+      return registroPushEnCurso;
+    }
+
+    async function obtenerYGuardarTokenPush() {
+      try {
+        if (!authFirebase || !authFirebase.currentUser || !dbFirebase) return;
+        if (!('Notification' in window) || Notification.permission !== 'granted' || !('serviceWorker' in navigator)) return;
+        if (!firebase.messaging || !firebase.messaging.isSupported()) return;
+        const reg = await navigator.serviceWorker.ready;
+        const token = await firebase.messaging().getToken({ serviceWorkerRegistration: reg });
+        if (!token) return;
+        const sesion = obtenerSesionActual();
+        await dbFirebase.collection('dispositivos').doc(token).set({
+          uid: authFirebase.currentUser.uid,
+          rol: sesion ? sesion.rol : 'ciudadano',
+          actualizado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        tokenPush = token;
+      } catch (e) {
+        console.warn('[Push] No se pudo registrar el dispositivo:', e.code || e.message);
+      }
+    }
+
+    // Al cerrar sesión el dispositivo deja de recibir los avisos de esa cuenta
+    async function quitarRegistroPush() {
+      if (registroPushEnCurso) { try { await registroPushEnCurso; } catch (e) {} }
+      const token = tokenPush;
+      tokenPush = null;
+      if (!token || !dbFirebase) return;
+      try { await dbFirebase.collection('dispositivos').doc(token).delete(); } catch (e) {}
+    }
+
+    // Instalación PWA
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btnInstalar = document.getElementById('btn-instalar-pwa');
+      const bannerInstalar = document.getElementById('banner-instalar-pwa');
+      if (btnInstalar) btnInstalar.classList.remove('hidden');
+      if (bannerInstalar) bannerInstalar.classList.remove('hidden');
+    });
+
+    function instalarPWA() {
+      vibrar(25);
+      if (!deferredPrompt) {
+        mostrarToast('PWA Instalable', 'En Safari iOS: tocar Compartir > Agregar al inicio. En Chrome móvil: menú ⋮ > Instalar.');
+        return;
+      }
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          vibrar([40, 60]);
+          mostrarToast('¡App Instalada!', 'San Francisco Residuos se agregó a tu pantalla de inicio.');
+        }
+        deferredPrompt = null;
+        const btnInstalar = document.getElementById('btn-instalar-pwa');
+        const bannerInstalar = document.getElementById('banner-instalar-pwa');
+        if (btnInstalar) btnInstalar.classList.add('hidden');
+        if (bannerInstalar) bannerInstalar.classList.add('hidden');
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      const btnInstalar = document.getElementById('btn-instalar-pwa');
+      const bannerInstalar = document.getElementById('banner-instalar-pwa');
+      if (btnInstalar) btnInstalar.classList.add('hidden');
+      if (bannerInstalar) bannerInstalar.classList.add('hidden');
+      mostrarToast('Bienvenido a SF Residuos', 'La aplicación ya está instalada como Web App nativa.');
+    });
+
+    // Estado de Conectividad Online / Offline
+    function actualizarEstadoRed() {
+      const badge = document.getElementById('badge-online-status');
+      const bannerOffline = document.getElementById('banner-offline');
+      if (navigator.onLine) {
+        if (badge) {
+          badge.className = 'text-[12px] px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+          badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>Online</span>';
+          badge.classList.remove('hidden');
+        }
+        if (bannerOffline) bannerOffline.classList.add('hidden');
+      } else {
+        if (badge) {
+          badge.className = 'text-[12px] px-2 py-0.5 rounded-full font-bold flex items-center space-x-1 bg-amber-500/20 text-amber-300 border border-amber-500/30';
+          badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>Offline</span>';
+          badge.classList.remove('hidden');
+        }
+        if (bannerOffline) bannerOffline.classList.remove('hidden');
+        vibrar([50, 100]);
+        mostrarToast('Modo Offline Activo', 'Los datos se guardan en la memoria local y se sincronizarán al recuperar señal.');
+      }
+    }
+
+    window.addEventListener('online', () => {
+      actualizarEstadoRed();
+      vibrar(30);
+      mostrarToast('Conexión Reestablecida', 'Sincronizando operaciones pendientes con la nube...');
+    });
+
+    window.addEventListener('offline', () => {
+      actualizarEstadoRed();
+    });
+
+
+    // =========================================================================
+    // CONFIGURACIÓN E INTEGRACIÓN OFICIAL CON GOOGLE CLOUD FIREBASE
+    // =========================================================================
+    // La configuración del proyecto vive en firebase-config.js (fuera del repositorio; ver firebase-config.ejemplo.js)
+    const firebaseConfig = window.FIREBASE_CONFIG;
+
+    let dbFirebase = null;
+    let authFirebase = null;
+    let desuscribirNube = [];
+
+    function inicializarFirebase() {
+      try {
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+          dbFirebase = firebase.firestore();
+          authFirebase = firebase.auth();
+          authFirebase.onAuthStateChanged(alCambiarAutenticacion);
+          console.log('[Firebase] Conectado exitosamente al proyecto sf-residuos-urbanos-utn');
+
+          // Habilitar persistencia sin desconectar en caso de tabs concurrentes
+          dbFirebase.enablePersistence({ synchronizeTabs: true }).catch(err => {
+            console.warn('[Firestore] Persistencia en caché local:', err.code);
+          });
+
+          // Escuchar telemetría en tiempo real desde Firestore si hay conexión
+          dbFirebase.collection('telemetria_contenedores').onSnapshot(snapshot => {
+            if (!snapshot.empty) {
+              snapshot.docChanges().forEach(change => {
+                const data = change.doc.data();
+                const eco = estadoApp.ecopuntos.find(e => e.id === change.doc.id);
+                if (eco && data.porcentajeLlenado !== undefined) {
+                  eco.capacidad = Math.round(data.porcentajeLlenado);
+                  if (data.temperaturaCelsius) eco.temperatura = data.temperaturaCelsius;
+                  if (data.bateriaPorcentaje) eco.bateria = data.bateriaPorcentaje;
+                }
+              });
+              guardarEnLocalStorage();
+              renderizarCampanasCiudadano();
+              renderizarTelemetriaIoTAutoridad();
+              window.mapaInstance = mapaInstance;
+      dibujarPuntosEnMapa();
+      window.capasPuntos = capasPuntos;
+            }
+          }, err => {
+            console.warn('[Firestore Telemetría Aviso]:', err.message);
+          });
+        }
+      } catch (err) {
+        console.warn('[Firebase] Inicialización en modo offline/resiliente:', err);
+      }
+    }
+
+    // Inicialización al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+      // Cada paso es independiente: si uno falla (por ejemplo, datos viejos guardados en el navegador),
+      // la pantalla de ingreso aparece igual
+      [inicializarFirebase, () => lucide.createIcons(), inicializarMapa,
+       () => actualizarSubcategoriasFormulario('reciclable'), renderizarTodo, actualizarEstadoRed,
+       actualizarBotonNotificaciones].forEach((paso) => {
+        try { paso(); } catch (e) { console.error('[Inicio]', e); }
+      });
+
+      actualizarUIAutenticacion();
+
+      // Registro oficial del Service Worker PWA
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('[PWA] Service Worker registrado con éxito:', reg.scope))
+          .catch((err) => console.warn('[PWA] Error al registrar Service Worker:', err));
+      }
+
+      setTimeout(() => {
+        mostrarToast('Servicio Conectado', 'Sistema municipal de gestión de residuos listo.');
+        // Registro inicial en la consola MQTT
+        agregarLogConsolaMQTT('sf/contenedores/ECO-SF-001/telemetria', {
+          dispositivo_id: 'SF-IOT-001',
+          contenedor_id: 'ECO-SF-001',
+          nombre: 'Ecopunto Plaza Cívica',
+          telemetria: { distancia_sensor_cm: 82.5, porcentaje_llenado: 45.0, temperatura_celsius: 22.4, bateria_porcentaje: 95 },
+          alarmas: { requiere_vaciado_urgente: false },
+          red: { protocolo: 'MQTT v5.0', qos: 1, broker: 'mosquitto.sanfrancisco.gob.ar' }
+        });
+      }, 1000);
+    });
+
+
+    // =========================================================================
+    // SUBSISTEMA DE AUTENTICACIÓN FORMAL, SESIONES Y RBAC (FIREBASE AUTH)
+    // =========================================================================
+
+    const AUTH_STORAGE_KEY = 'SF_RESIDUOS_AUTH_SESSION_V2';
+
+    // Obtener sesión activa con validación de caducidad
+    function obtenerSesionActual() {
+      const guardado = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (guardado) {
+        try {
+          const sesion = JSON.parse(guardado);
+          if (sesion && sesion.expiracion > Date.now()) {
+            return sesion;
+          }
+        } catch (e) {
+          console.error('Error al recuperar sesión:', e);
+        }
+      }
+      return null;
+    }
+
+    // Persistir la sesión del usuario (7 días)
+    function guardarSesion(usuario, usuarioNube) {
+      const sesion = {
+        uid: usuarioNube ? usuarioNube.uid : usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol,
+        dni: usuario.dni || 'No registrado',
+        barrio: usuario.barrio || 'San Francisco',
+        direccion: usuario.direccion || 'San Francisco',
+        puntosEco: usuario.puntosEco || 0,
+        unidad: usuario.unidad || null,
+        cargo: usuario.cargo || null,
+        expiracion: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 días de persistencia
+      };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sesion));
+      try { localStorage.removeItem('SF_USER_LOGGED_OUT'); } catch(e) {}
+      return sesion;
+    }
+
+    // Cerrar sesión
+    function cerrarSesion() {
+      vibrar(25);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      try { localStorage.setItem('SF_USER_LOGGED_OUT', '1'); } catch(e) {}
+      detenerEscuchasNube();
+      ['modal-perfil-usuario', 'modal-registro', 'modal-incidente'].forEach(m => { const el = document.getElementById(m); if (el) el.classList.add('hidden'); });
+      if (typeof cerrarModalScanner === 'function') cerrarModalScanner();
+      if (authFirebase) Promise.race([quitarRegistroPush(), new Promise(r => setTimeout(r, 2000))]).finally(() => authFirebase.signOut().catch(() => {}));
+      window.scrollTo(0, 0);
+      actualizarUIAutenticacion();
+      mostrarToast('Sesión Finalizada', 'Has cerrado sesión en el sistema municipal.');
+    }
+
+    let ingresoEnCurso = false;
+
+    // Rol del usuario: primero el claim firmado por el servidor; luego el rol que la administración asignó a su
+    // correo de Google (documento propio en roles_por_correo, que las reglas solo dejan leer al titular)
+    async function rolDeUsuarioNube(fb) {
+      try {
+        const t = await fb.getIdTokenResult();
+        if (t.claims.rol === 'autoridad' || t.claims.rol === 'recolector') return t.claims.rol;
+      } catch (e) {}
+      if (fb.emailVerified && fb.email && dbFirebase) {
+        try {
+          const doc = await dbFirebase.collection('roles_por_correo').doc(fb.email.toLowerCase()).get();
+          const rol = doc.exists ? doc.data().rol : null;
+          if (rol === 'autoridad' || rol === 'recolector') return rol;
+        } catch (e) {}
+      }
+      return 'ciudadano';
+    }
+
+    // Arma la sesión local a partir del usuario ya autenticado en la nube
+    async function completarIngreso(fb, conAviso) {
+      const rol = await rolDeUsuarioNube(fb);
+      const base = rol === 'ciudadano' ? null : DATOS_SEMILLA.usuariosRegistrados.find(u => u.rol === rol);
+      const usuario = Object.assign(
+        { dni: 'No registrado', barrio: 'San Francisco', direccion: 'San Francisco', puntosEco: 0 }, base || {},
+        { id: fb.uid, nombre: fb.displayName || (base && base.nombre) || 'Vecino', email: fb.email || '', rol });
+      guardarSesion(usuario, fb);
+      if (conAviso) {
+        vibrar([30, 50, 30]);
+        mostrarToast(`¡Bienvenido, ${usuario.nombre.split(' ')[0]}!`, `Sesión iniciada con perfil de ${rol.toUpperCase()}.`);
+      }
+      actualizarUIAutenticacion();
+      escucharNube();
+      registrarPushFCM();
+    }
+
+    // Autenticación con Google Identity (Firebase Auth Google Provider)
+    async function ingresarConGoogle() {
+      vibrar([20, 40]);
+      if (!authFirebase) {
+        mostrarToast('Sin Conexión', 'No se pudo conectar con el servicio de cuentas de Google.');
+        return;
+      }
+      ingresoEnCurso = true;
+      try {
+        const cred = await authFirebase.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        await completarIngreso(cred.user, true);
+      } catch (err) {
+        if (['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(err.code)) return;
+        mostrarToast('Google No Disponible', 'No se pudo iniciar sesión con Google. Intentá de nuevo en unos minutos.');
+      } finally {
+        ingresoEnCurso = false;
+      }
+    }
+
+    // Sincroniza la sesión local con la de Firebase (recarga, otra pestaña, sesión vencida)
+    function alCambiarAutenticacion(fb) {
+      if (ingresoEnCurso) return;
+      const sesion = obtenerSesionActual();
+      if (fb && !sesion) {
+        completarIngreso(fb, false);
+        return;
+      }
+      if (!fb && sesion) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        detenerEscuchasNube();
+        actualizarUIAutenticacion();
+        return;
+      }
+      escucharNube();
+      registrarPushFCM();
+    }
+
+    // Actualización de la Interfaz según Estado de Autenticación
+    function actualizarUIAutenticacion() {
+      const sesion = obtenerSesionActual();
+      document.body.classList.toggle('autenticado', !!sesion);
+      const pantallaIngreso = document.getElementById('pantalla-ingreso');
+      const bottomNav = document.querySelector('nav.safe-area-pb');
+      const headerSesion = document.getElementById('header-sesion');
+
+      if (!sesion) {
+        // Estado NO autenticado: Mostrar pantalla de ingreso
+        if (pantallaIngreso) pantallaIngreso.classList.remove('hidden');
+        if (bottomNav) bottomNav.classList.add('hidden');
+        if (headerSesion) headerSesion.style.display = 'none';
+        ['ciudadano', 'autoridad', 'recolector'].forEach(r => {
+          const v = document.getElementById(`vista-${r}`);
+          if (v) v.classList.add('hidden');
+        });
+        return;
+      }
+
+      // Estado AUTENTICADO: Ocultar ingreso y activar interfaz principal
+      if (bottomNav) bottomNav.classList.remove('hidden');
+      if (headerSesion) headerSesion.style.display = 'flex';
+
+      // Actualizar información del usuario en la barra superior
+      const nombreHeader = document.getElementById('nombre-usuario-header');
+      const rolHeader = document.getElementById('rol-usuario-header');
+      const avatarHeader = document.getElementById('avatar-usuario');
+
+      if (nombreHeader) nombreHeader.innerText = sesion.nombre;
+      const saludo = document.getElementById('saludo-nombre');
+      if (saludo) saludo.innerText = (sesion.nombre || 'vecino').split(' ')[0];
+      if (avatarHeader) {
+        const iniciales = sesion.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+        avatarHeader.innerText = iniciales;
+      }
+      if (rolHeader) {
+        if (sesion.rol === 'ciudadano') {
+          rolHeader.innerText = 'Vecino';
+        } else if (sesion.rol === 'autoridad') {
+          rolHeader.innerText = 'Autoridad Municipal';
+        } else {
+          rolHeader.innerText = 'Personal de cuadrilla';
+        }
+      }
+
+      // Conmutar a la vista correspondiente al rol autenticado
+      cambiarRol(sesion.rol, true);
+      lucide.createIcons();
+      if (pantallaIngreso) pantallaIngreso.classList.add('hidden');
+    }
+
+    // Modal de Perfil de Usuario
+    function abrirModalPerfil() {
+      vibrar(20);
+      const sesion = obtenerSesionActual();
+      if (!sesion) return;
+
+      const modalNombre = document.getElementById('modal-nombre');
+      const modalEmail = document.getElementById('modal-email');
+      const modalDni = document.getElementById('modal-dni');
+      const modalBarrio = document.getElementById('modal-barrio');
+      const modalDir = document.getElementById('modal-direccion');
+      const modalPuntos = document.getElementById('modal-puntos');
+      const modalAvatar = document.getElementById('modal-avatar');
+      const modalBadge = document.getElementById('modal-rol-badge');
+
+      if (modalNombre) modalNombre.innerText = sesion.nombre;
+      if (modalEmail) modalEmail.innerText = sesion.email;
+      if (modalDni) modalDni.innerText = sesion.dni;
+      if (modalBarrio) modalBarrio.innerText = sesion.barrio;
+      if (modalDir) modalDir.innerText = sesion.direccion;
+      const puntosCalculados = (sesion.rol === 'ciudadano' ? (estadoApp.kilosRecolectadosUsuario || sesion.puntosEco || 0) : (sesion.puntosEco || 0));
+      if (modalPuntos) modalPuntos.innerText = `${Number(puntosCalculados).toFixed(1)} kg / EcoPuntos`;
+      if (modalAvatar) {
+        modalAvatar.innerText = sesion.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+      }
+      if (modalBadge) {
+        modalBadge.innerText = sesion.rol === 'ciudadano' ? 'Vecino' : (sesion.rol === 'autoridad' ? 'Autoridad Municipal' : 'Cuadrilla Operativa');
+      }
+
+      const modal = document.getElementById('modal-perfil-usuario');
+      if (modal) modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    // Control de Roles y Navegación Móvil con Reglas de Seguridad RBAC
+    function cambiarRol(nuevoRol, forzar = false) {
+      const sesion = obtenerSesionActual();
+      if (!sesion) {
+        actualizarUIAutenticacion();
+        return;
+      }
+
+      // Control de Acceso Basado en Roles (RBAC)
+      if (!forzar) {
+        if (sesion.rol !== nuevoRol) {
+          vibrar([50, 100, 50]);
+          mostrarToast('Acceso restringido', 'Tu cuenta no tiene acceso a esa sección. Cerrá sesión para ingresar con otra cuenta.');
+          return;
+        }
+      }
+
+      vibrar(20);
+      estadoApp.rolActual = nuevoRol;
+      guardarEnLocalStorage();
+
+      const roles = ['ciudadano', 'autoridad', 'recolector'];
+      roles.forEach(r => {
+        const vista = document.getElementById(`vista-${r}`);
+        const bnavContainer = document.getElementById(`bnav-${r}-container`);
+        if (r === nuevoRol) {
+          if (vista) vista.classList.remove('hidden');
+          if (bnavContainer) bnavContainer.classList.remove('hidden');
+        } else {
+          if (vista) vista.classList.add('hidden');
+          if (bnavContainer) bnavContainer.classList.add('hidden');
+        }
+      });
+
+      // Actualizar el identificador de rol en la barra superior
+      const badgeIcono = document.getElementById('badge-rol-icono');
+      const badgeTexto = document.getElementById('badge-rol-texto');
+      if (badgeIcono && badgeTexto) {
+        const iconos = { ciudadano: 'user', autoridad: 'shield', recolector: 'truck' };
+        const textos = { ciudadano: 'Portal Vecino', autoridad: 'Panel Municipal', recolector: 'Módulo Cuadrilla' };
+        badgeIcono.innerHTML = `<i data-lucide="${iconos[nuevoRol]}" class="w-4 h-4"></i>`;
+        badgeTexto.innerText = textos[nuevoRol];
+      }
+
+      // Mover el contenedor del mapa al slot de la vista activa para que siempre esté visible y operativo
+      const seccionMapa = document.getElementById('seccion-mapa-vecino');
+      if (seccionMapa) {
+        let slotDestino = null;
+        if (nuevoRol === 'ciudadano') slotDestino = document.getElementById('slot-mapa-ciudadano');
+        else if (nuevoRol === 'autoridad') slotDestino = document.getElementById('slot-mapa-autoridad');
+        else if (nuevoRol === 'recolector') slotDestino = document.getElementById('slot-mapa-recolector');
+        if (slotDestino && seccionMapa.parentElement !== slotDestino) {
+          slotDestino.appendChild(seccionMapa);
+        }
+        const tituloMapa = document.getElementById('mapa-titulo-rol');
+        if (tituloMapa) {
+          if (nuevoRol === 'ciudadano') tituloMapa.innerText = 'Ecopuntos en San Francisco';
+          else if (nuevoRol === 'autoridad') tituloMapa.innerText = 'Mapa de la ciudad';
+          else if (nuevoRol === 'recolector') tituloMapa.innerText = 'Mapa de tu ruta';
+        }
+      }
+
+      if (mapaInstance) {
+        setTimeout(() => mapaInstance.invalidateSize(), 150);
+      }
+
+      renderizarNavegacion(nuevoRol);
+      renderizarTodo();
+      lucide.createIcons();
+    }
+
+
+    // Secciones de cada tablero: alimentan el menú lateral y la barra inferior
+    const MENU_POR_ROL = {
+      ciudadano: [
+        { t: 'Inicio', i: 'home', d: 'seccion-inicio-vecino', barra: true },
+        { t: 'Mapa', i: 'map-pin', d: 'seccion-mapa-vecino', barra: true },
+        { t: 'Mis solicitudes', c: 'Solicitudes', i: 'clipboard-list', d: 'card-solicitudes-vecino', barra: true },
+        { t: 'Avisos', i: 'bell', d: 'card-campanas-vecino', barra: true },
+        { t: 'Contenedores', i: 'recycle', d: 'card-disponibilidad-vecino', barra: true },
+        { t: 'Horarios', i: 'calendar-clock', d: 'card-horarios-vecino' }
+      ],
+      autoridad: [
+        { t: 'Resumen', i: 'layout-dashboard', d: 'seccion-kpis-muni', barra: true },
+        { t: 'Rutas', i: 'route', d: 'planificador-rutas-card', barra: true },
+        { t: 'Mapa', i: 'map-pin', d: 'seccion-mapa-vecino' },
+        { t: 'Incidentes', i: 'alert-octagon', d: 'tabla-incidentes-card', barra: true },
+        { t: 'Campañas', i: 'megaphone', d: 'card-campanas-muni' },
+        { t: 'Contenedores', i: 'recycle', d: 'panel-iot-card', barra: true }
+      ],
+      recolector: [
+        { t: 'Resumen', i: 'layout-dashboard', d: 'kpis-cuadrilla', barra: true },
+        { t: 'Mi ruta', i: 'route', d: 'seccion-paradas-cuadrilla', barra: true },
+        { t: 'Mapa', i: 'map-pin', d: 'seccion-mapa-vecino', barra: true },
+        { t: 'Confirmar parada', c: 'Confirmar', i: 'check-circle', d: 'card-confirmacion-cuadrilla', barra: true }
+      ]
+    };
+    let rolNavegacion = null;
+
+    function actualizarNavegacionActiva() {
+      const items = MENU_POR_ROL[rolNavegacion] || [];
+      let activo = items.length ? items[0].d : null;
+      items.forEach(it => {
+        const el = document.getElementById(it.d);
+        if (el && el.offsetParent !== null && el.getBoundingClientRect().top <= 140) activo = it.d;
+      });
+      document.querySelectorAll('[data-nav-destino]').forEach(b =>
+        b.setAttribute('aria-current', b.dataset.navDestino === activo ? 'true' : 'false'));
+    }
+
+    function renderizarNavegacion(rol) {
+      rolNavegacion = rol;
+      const items = MENU_POR_ROL[rol] || [];
+      items.forEach(it => { const el = document.getElementById(it.d); if (el) el.classList.add('anclaje'); });
+      const lateral = document.getElementById('menu-lateral-items');
+      if (lateral) {
+        lateral.innerHTML = items.map(it =>
+          `<button type="button" class="nav-item" data-nav-destino="${it.d}" onclick="scrollHaciaElemento('${it.d}')"><i data-lucide="${it.i}" class="w-5 h-5 shrink-0"></i><span>${it.t}</span></button>`).join('');
+      }
+      const barra = document.getElementById('bottom-nav-items');
+      if (barra) {
+        barra.innerHTML = items.filter(it => it.barra).map(it =>
+          `<button type="button" class="nav-tab" data-nav-destino="${it.d}" onclick="scrollHaciaElemento('${it.d}')"><span class="pill"><i data-lucide="${it.i}" class="w-[22px] h-[22px]"></i></span><span>${it.c || it.t}</span></button>`).join('');
+      }
+      lucide.createIcons();
+      actualizarNavegacionActiva();
+    }
+
+    window.addEventListener('scroll', () => requestAnimationFrame(actualizarNavegacionActiva), { passive: true });
+
+    // Desplazamiento suave para navegación móvil contextual
+    function scrollHaciaElemento(id) {
+      vibrar(15);
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // Inicialización del Mapa Leaflet
+    function inicializarMapa() {
+      const contenedorMapa = document.getElementById('mapa-sf');
+      if (!contenedorMapa) return;
+
+      mapaInstance = L.map('mapa-sf', {
+        center: COORDS_SF,
+        zoom: 14,
+        zoomControl: true,
+        zoomSnap: 0.25
+      });
+
+      // Capa de teselas cartográficas de alta definición Esri World Street Map
+      // Provee cobertura vial detallada de San Francisco sin requerir API key ni sufrir restricciones por políticas de referer
+      const capaTeselas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; <a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a> &mdash; UTN FRSFCO'
+      }).addTo(mapaInstance);
+
+      // Respaldo resiliente a servidor espejo alternativo ante posibles cortes de CDN
+      capaTeselas.on('tileerror', function(error) {
+        if (error.tile && !error.tile._fallback) {
+          error.tile._fallback = true;
+          const coords = error.coords;
+          error.tile.src = `https://a.tile.openstreetmap.fr/osmfr/${coords.z}/${coords.x}/${coords.y}.png`;
+        }
+      });
+
+      window.mapaInstance = mapaInstance;
+      dibujarPuntosEnMapa();
+      window.capasPuntos = capasPuntos;
+    }
+
+    // Funciones de navegación territorial en el mapa de San Francisco
+    function centrarEnPunto(lat, lng, nombre) {
+      if (!mapaInstance) return;
+      mapaInstance.flyTo([lat, lng], 16, { duration: 0.8 });
+      const capa = capasPuntos.find(c => {
+        if (!c.getLatLng) return false;
+        const ll = c.getLatLng();
+        return Math.abs(ll.lat - lat) < 0.002 && Math.abs(ll.lng - lng) < 0.002;
+      });
+      if (capa) {
+        setTimeout(() => { if (capa.openPopup) capa.openPopup(); }, 850);
+      }
+      vibrar(20);
+    }
+
+    function ajustarEncuadreCompleto() {
+      if (!mapaInstance) return;
+      if (capasPuntos.length > 0) {
+        const grupo = L.featureGroup(capasPuntos);
+        mapaInstance.fitBounds(grupo.getBounds().pad(0.12), { animate: true });
+      } else {
+        mapaInstance.setView(COORDS_SF, 14);
+      }
+      vibrar(20);
+      mostrarToast('Vista San Francisco', 'Visualizando todos los ecopuntos y reclamos urbanos.');
+    }
+
+    // Dibujar Ecopuntos, Solicitudes e Incidentes en Mapa
+    function dibujarPuntosEnMapa() {
+      if (!mapaInstance) return;
+
+      capasPuntos.forEach(c => mapaInstance.removeLayer(c));
+      capasPuntos = [];
+
+      // 1. Ecopuntos con Telemetría IoT en Tiempo Real
+      estadoApp.ecopuntos.forEach(p => {
+        const esAlertaCritica = p.capacidad >= 80;
+        const esAlertaMedia = p.capacidad > 60;
+        const icono = L.divIcon({
+          className: 'custom-pin-eco',
+          html: `<div class="w-8 h-8 rounded-full ${esAlertaCritica ? 'bg-rose-600 ring-4 ring-rose-400/50 animate-pulse' : esAlertaMedia ? 'bg-amber-500' : 'bg-emerald-600'} border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold">${esAlertaCritica ? '⚠️' : '♻'}</div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+
+        const distCm = Math.round(150 * (1 - p.capacidad / 100));
+        const marker = L.marker(p.coords, { icon: icono }).addTo(mapaInstance);
+        marker.bindPopup(`
+          <div class="text-xs p-1">
+            <div class="flex items-center justify-between pb-1 border-b border-slate-100">
+              <span class="text-[12px] px-1.5 py-0.5 rounded ${esAlertaCritica ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'} font-bold">
+                ${esAlertaCritica ? 'Requiere Vaciado' : 'Operativo'}
+              </span>
+              <span class="text-[12px] text-slate-500 font-medium">Punto ${p.id.slice(-3)}</span>
+            </div>
+            <h4 class="font-bold text-slate-800 text-sm mt-1">${escapeHTML(p.nombre)}</h4>
+            <p class="text-slate-500 text-xs mt-0.5">${escapeHTML(p.tipo)} • ${escapeHTML(p.direccion)}</p>
+            <div class="mt-2 space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-600 font-medium">Nivel de Llenado:</span> 
+                <span class="font-black text-xs ${esAlertaCritica ? 'text-rose-600' : esAlertaMedia ? 'text-amber-600' : 'text-emerald-700'}">${p.capacidad}% ${esAlertaCritica ? '(Desborde)' : ''}</span>
+              </div>
+              <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="${esAlertaCritica ? 'bg-rose-500' : esAlertaMedia ? 'bg-amber-500' : 'bg-emerald-500'} h-full transition-all" style="width: ${p.capacidad}%"></div>
+              </div>
+              ${(() => {
+                const sa = typeof obtenerSesionActual === 'function' ? obtenerSesionActual() : null;
+                if (sa && sa.rol === 'ciudadano') return '';
+                return `<div class="flex justify-between text-[13px] text-slate-500 pt-1 border-t border-slate-200/60">
+                <span>Espacio libre: <b>${distCm} cm</b></span>
+                <span>Temperatura: <b>${p.temperatura || 22.4} °C</b></span>
+                <span>Batería: <b>${p.bateria || 92}%</b></span>
+              </div>`;
+              })()}
+            </div>
+            ${(() => {
+              const sesionAct = typeof obtenerSesionActual === 'function' ? obtenerSesionActual() : null;
+              const rolVisto = sesionAct ? sesionAct.rol : (estadoApp.rolActual || 'ciudadano');
+              if (rolVisto === 'recolector') {
+                return `
+                  <button onclick="document.getElementById('input-qr-manual').value='${p.id}'; validarIdentificadorQR('${p.id}'); scrollHaciaElemento('seccion-paradas-cuadrilla');" class="mt-2 w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-1.5 px-2 rounded-lg text-xs transition">
+                    Validar Punto de Recolección
+                  </button>
+                `;
+              } else if (rolVisto === 'autoridad') {
+                return `
+                  <button onclick="scrollHaciaElemento('panel-iot-card')" class="mt-2 w-full bg-sky-700 hover:bg-sky-800 text-white font-medium py-1.5 px-2 rounded-lg text-xs transition">
+                    Ver en Panel de Contenedores
+                  </button>
+                `;
+              } else {
+                return `
+                  <button onclick="abrirModalRegistro('reciclable')" class="mt-2 w-full bg-emerald-700 hover:bg-emerald-800 text-white font-medium py-1.5 px-2 rounded-lg text-xs transition">
+                    Entregar Residuos Aquí
+                  </button>
+                `;
+              }
+            })()}
+          </div>
+        `);
+        capasPuntos.push(marker);
+      });
+
+      // 2. Solicitudes de Vecinos
+      estadoApp.solicitudes.filter(s => s.estado !== 'recolectado').forEach(s => {
+        const iconoSol = L.divIcon({
+          className: 'custom-pin-sol',
+          html: `<div class="w-7 h-7 rounded-full ${s.tipo === 'voluminoso' ? 'bg-orange-600' : s.tipo === 'peligroso' ? 'bg-rose-600' : 'bg-blue-600'} border-2 border-white shadow-md flex items-center justify-center text-white text-[12px] font-bold">📦</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+        const marker = L.marker(s.coords, { icon: iconoSol }).addTo(mapaInstance);
+        marker.bindPopup(`
+          <div class="text-xs p-1">
+            <span class="text-[12px] uppercase font-bold text-orange-600">${escapeHTML(s.tipo)}</span>
+            <h4 class="font-bold text-slate-800">${escapeHTML(s.subcategoria)}</h4>
+            <p class="text-slate-600">${escapeHTML(s.cantidad)} en ${escapeHTML(s.direccion)}</p>
+            <p class="text-[13px] text-slate-500 mt-1">Vecino: ${escapeHTML(s.usuario)}</p>
+            <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[12px] font-semibold ${s.estado === 'en_camino' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}">
+              Estado: ${escapeHTML(s.estado.replace('_', ' '))}
+            </span>
+          </div>
+        `);
+        capasPuntos.push(marker);
+      });
+
+      // 3. Incidentes Urbanos en el Mapa
+      estadoApp.incidentes.filter(i => i.estado !== 'resuelto').forEach(inc => {
+        const coords = inc.coords || [-31.4250, -62.0800];
+        const iconoInc = L.divIcon({
+          className: 'custom-pin-inc',
+          html: `<div class="w-7 h-7 rounded-full bg-rose-600 border-2 border-white shadow-md flex items-center justify-center text-white text-[13px] font-bold">!</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+        const marker = L.marker(coords, { icon: iconoInc }).addTo(mapaInstance);
+        marker.bindPopup(`
+          <div class="text-xs p-1">
+            <span class="text-[12px] uppercase font-bold text-rose-600">INCIDENTE URBANO</span>
+            <h4 class="font-bold text-slate-800">${escapeHTML(inc.tipo)}</h4>
+            <p class="text-slate-600">${escapeHTML(inc.ubicacion)}</p>
+            <p class="text-[13px] text-slate-500 mt-0.5">${escapeHTML(inc.descripcion || 'Sin detalle')}</p>
+            <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[12px] font-bold ${inc.gravedad === 'alta' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
+              Prioridad: ${escapeHTML(inc.gravedad.toUpperCase())}
+            </span>
+          </div>
+        `);
+        capasPuntos.push(marker);
+      });
+    }
+
+    // Render general
+    function renderizarTodo() {
+      renderizarSolicitudesCiudadano();
+      renderizarCampanasCiudadano();
+      renderizarDisponibilidadVecino();
+      renderizarCronogramaVecino();
+      renderizarAutoridad();
+      renderizarRecolector();
+      renderizarKpisCuadrilla();
+      window.mapaInstance = mapaInstance;
+      dibujarPuntosEnMapa();
+      window.capasPuntos = capasPuntos;
+      lucide.createIcons();
+    }
+
+    // Cronograma de referencia de recolección domiciliaria por zona
+    const CRONOGRAMA_RECOLECCION = [
+      { zona: 'Centro, Catedral y Hospital', barrios: ['Centro', 'Catedral', 'Hospital'], domiciliarios: 'Lun · Mié · Vie, 21:00', reciclables: 'Martes, 08:00', especiales: 'Jueves, con solicitud' },
+      { zona: 'Cincuentenario y Urquiza', barrios: ['Cincuentenario', 'Urquiza', 'Roca'], domiciliarios: 'Mar · Jue · Sáb, 21:00', reciclables: 'Miércoles, 08:00', especiales: 'Viernes, con solicitud' },
+      { zona: 'Sarmiento y Universidad', barrios: ['Sarmiento', 'Universidad', 'Cervantes'], domiciliarios: 'Lun · Mié · Vie, 20:00', reciclables: 'Jueves, 08:00', especiales: 'Sábado, con solicitud' }
+    ];
+
+    function renderizarCronogramaVecino() {
+      const tbody = document.getElementById('tabla-cronograma-vecino');
+      if (!tbody) return;
+      const sesion = obtenerSesionActual();
+      const barrio = sesion && sesion.barrio ? sesion.barrio : '';
+      const miZona = CRONOGRAMA_RECOLECCION.find(z => z.barrios.includes(barrio));
+      const etiqueta = document.getElementById('zona-vecino-cronograma');
+      if (etiqueta) etiqueta.innerText = miZona ? `Tu zona: ${miZona.zona}` : '';
+      tbody.innerHTML = CRONOGRAMA_RECOLECCION.map(z => `
+        <tr class="border-b border-slate-100 ${z === miZona ? 'bg-emerald-50' : ''}">
+          <td class="py-2 pr-3 font-semibold text-slate-800">${escapeHTML(z.zona)}${z === miZona ? ' <span class="text-[12px] font-bold text-emerald-700">• Tu zona</span>' : ''}</td>
+          <td class="py-2 pr-3 text-slate-600">${escapeHTML(z.domiciliarios)}</td>
+          <td class="py-2 pr-3 text-slate-600">${escapeHTML(z.reciclables)}</td>
+          <td class="py-2 text-slate-600">${escapeHTML(z.especiales)}</td>
+        </tr>`).join('');
+    }
+
+    // Render Ciudadano: disponibilidad de contenedores, sin datos técnicos de sensores
+    function renderizarDisponibilidadVecino() {
+      const cont = document.getElementById('lista-disponibilidad-vecino');
+      if (!cont) return;
+      cont.innerHTML = estadoApp.ecopuntos.map(e => {
+        const lleno = e.capacidad >= 80;
+        const medio = e.capacidad > 60;
+        const etiqueta = lleno ? 'Lleno' : medio ? 'Casi lleno' : 'Disponible';
+        const estilo = lleno ? 'bg-rose-100 text-rose-700' : medio ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
+        const barra = lleno ? 'bg-rose-500' : medio ? 'bg-amber-500' : 'bg-emerald-500';
+        return `
+          <div class="p-3 rounded-xl border border-slate-200 text-xs flex flex-col justify-between">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded-full font-bold text-[12px] ${estilo}">${etiqueta}</span>
+              <h5 class="font-bold text-slate-800 text-[15px] leading-tight mt-1.5">${escapeHTML(e.nombre)}</h5>
+              <p class="text-[12px] text-slate-500 mt-0.5 truncate">${escapeHTML(e.direccion || '')}</p>
+              <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-2">
+                <div class="${barra} h-full" style="width: ${e.capacidad}%"></div>
+              </div>
+            </div>
+            <button onclick="centrarEnPunto(${e.coords[0]}, ${e.coords[1]}, '${escapeHTML(e.nombre)}')" class="mt-2 text-[12px] font-semibold text-emerald-700 hover:text-emerald-900 text-left">Ver en el mapa</button>
+          </div>`;
+      }).join('');
+    }
+
+    // Render Cuadrilla: resumen operativo del turno
+    function renderizarKpisCuadrilla() {
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+      const urgentes = estadoApp.ecopuntos.filter(e => e.capacidad >= 80).length;
+      const paradasEco = estadoApp.ecopuntos.filter(e => e.capacidad > 25).length;
+      const retiros = estadoApp.solicitudes.filter(s => s.estado === 'en_camino' && esMiCuadrilla(s.cuadrilla)).length;
+      set('kpi-cuad-paradas', paradasEco + retiros);
+      set('kpi-cuad-urgentes', urgentes);
+      set('kpi-cuad-retiros', retiros);
+      set('kpi-cuad-kilos', `${(estadoApp.kilosTurnoCuadrilla || 0).toFixed(1)} kg`);
+    }
+
+    // Render Ciudadano
+    function renderizarSolicitudesCiudadano() {
+      const cont = document.getElementById('lista-solicitudes-vecino');
+      const conteo = document.getElementById('conteo-solicitudes');
+      const statKilos = document.getElementById('stat-ciudadano-kilos');
+      const statRetiros = document.getElementById('stat-ciudadano-retiros');
+      if (!cont) return;
+
+      const sesion = typeof obtenerSesionActual === 'function' ? obtenerSesionActual() : null;
+      const usrActual = (sesion && estadoApp.usuariosRegistrados)
+        ? estadoApp.usuariosRegistrados.find(u => u.email === sesion.email || u.dni === sesion.dni)
+        : null;
+      const puntos = usrActual ? usrActual.puntosEco : (sesion && sesion.puntosEco !== undefined ? sesion.puntosEco : (estadoApp.kilosRecolectadosUsuario || 0));
+      
+      const cerrados = estadoApp.solicitudes.filter(s => s.estado === 'recolectado' && (!sesion || s.usuario === sesion.nombre)).length;
+      statKilos.innerText = `${Number(puntos).toFixed(1)} kg`;
+      statRetiros.innerText = `${cerrados} cerrados`;
+
+      conteo.innerText = `${estadoApp.solicitudes.length} registradas`;
+
+      cont.innerHTML = estadoApp.solicitudes.map(s => `
+        <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between text-xs">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="font-bold text-slate-800">${escapeHTML(s.subcategoria)}</span>
+              <span class="text-[12px] px-1.5 py-0.2 rounded font-semibold ${
+                s.estado === 'recolectado' ? 'bg-emerald-100 text-emerald-800' :
+                s.estado === 'en_camino' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
+              }">${escapeHTML(s.estado.replace('_', ' '))}</span>
+            </div>
+            <p class="text-slate-500 text-[13px] mt-0.5">${escapeHTML(s.cantidad)} • ${escapeHTML(s.direccion)}</p>
+            ${s.observaciones ? `<p class="text-[12px] text-slate-400 italic">Nota: ${escapeHTML(s.observaciones)}</p>` : ''}
+            ${s.cuadrilla ? `<p class="text-[12px] text-sky-700 font-medium mt-0.5"><i data-lucide="truck" class="w-3 h-3 inline"></i> ${escapeHTML(s.cuadrilla)}</p>` : ''}
+          </div>
+          <span class="text-[12px] text-slate-500 font-mono font-medium bg-slate-100 px-2 py-0.5 rounded-full">N.º ${s.id.split('-').pop()}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderizarCampanasCiudadano() {
+      const cont = document.getElementById('lista-campanas-vecino');
+      if (!cont) return;
+
+      cont.innerHTML = estadoApp.campanas.map(c => `
+        <div class="p-2.5 rounded-xl border border-amber-200/60 bg-amber-50/50">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-amber-900">${escapeHTML(c.titulo)}</h4>
+            <span class="text-[12px] text-amber-700 font-semibold">${escapeHTML(c.fecha)}</span>
+          </div>
+          <p class="text-[13px] text-slate-600 mt-1">${escapeHTML(c.desc)}</p>
+        </div>
+      `).join('');
+    }
+
+    // Render Autoridad
+    function renderizarAutoridad() {
+      const pendientes = estadoApp.solicitudes.filter(s => s.estado === 'pendiente');
+      document.getElementById('kpi-pendientes').innerText = pendientes.length;
+      document.getElementById('kpi-pendientes-sub').innerText = `${pendientes.filter(s => s.tipo === 'voluminoso').length} voluminosos, ${pendientes.filter(s => s.tipo === 'peligroso').length} peligrosos`;
+
+      const activosInc = estadoApp.incidentes.filter(i => i.estado !== 'resuelto');
+      document.getElementById('kpi-incidentes').innerText = activosInc.length;
+      document.getElementById('kpi-incidentes-sub').innerText = `${activosInc.filter(i => i.gravedad === 'alta').length} de alta prioridad`;
+
+      // Lista para asignar rutas con checkboxes funcionales
+      const contDespacho = document.getElementById('lista-despacho-autoridad');
+      if (contDespacho) {
+        // Se conserva lo que la autoridad desmarcó aunque lleguen datos nuevos
+        const desmarcadas = new Set([...contDespacho.querySelectorAll('.chk-despacho-solicitud:not(:checked)')].map(c => c.value));
+        contDespacho.innerHTML = pendientes.map(p => `
+          <div class="p-2 rounded-lg bg-white border border-slate-200 flex items-center justify-between text-xs hover:border-sky-300 transition">
+            <div class="flex-1 pr-2">
+              <div class="flex items-center space-x-1">
+                <span class="font-semibold text-slate-800">${escapeHTML(p.subcategoria)}</span>
+                <span class="text-[12px] uppercase font-bold text-slate-400">(${escapeHTML(p.tipo)})</span>
+              </div>
+              <span class="text-slate-500 text-[13px] block">${escapeHTML(p.direccion)} • ${escapeHTML(p.cantidad)}</span>
+            </div>
+            <input type="checkbox" checked value="${p.id}" class="chk-despacho-solicitud rounded text-sky-600 focus:ring-sky-500 h-4 w-4">
+          </div>
+        `).join('') || '<p class="text-xs text-slate-400 italic">No hay solicitudes pendientes por despachar.</p>';
+        contDespacho.querySelectorAll('.chk-despacho-solicitud').forEach(c => { if (desmarcadas.has(c.value)) c.checked = false; });
+      }
+
+      // Tabla de incidentes
+      const tbody = document.getElementById('tabla-incidentes-body');
+      if (tbody) {
+        tbody.innerHTML = estadoApp.incidentes.map(inc => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3 font-medium text-slate-800">${escapeHTML(inc.tipo)}</td>
+            <td class="py-2.5 px-3 text-slate-600">${escapeHTML(inc.ubicacion)}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded text-[12px] font-bold ${
+                inc.gravedad === 'alta' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+              }">${inc.gravedad.toUpperCase()}</span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="text-[13px] text-slate-700 font-medium">${escapeHTML(inc.estado.replace('_', ' '))}</span>
+            </td>
+            <td class="py-2.5 px-3 text-right">
+              ${inc.estado !== 'resuelto' ? `
+                <button onclick="resolverIncidente('${inc.id}')" class="text-[13px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-semibold transition">
+                  Resolver
+                </button>
+              ` : '<span class="text-emerald-600 font-semibold text-[12px]">Cerrado</span>'}
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      renderizarTelemetriaIoTAutoridad();
+    }
+
+    // ==========================================================
+    // MÓDULO IOT Y SIMULADOR DE TELEMETRÍA MQTT
+    // ==========================================================
+
+    // =========================================================================
+    // SIMULADOR CONTINUO DE TELEMETRÍA IOT Y SINCRONIZACIÓN FIREBASE
+    // =========================================================================
+    let timerSimulacionSensores = null;
+    let simulacionSensoresActiva = false;
+    let indiceSensorSimulado = 0;
+
+    function conmutarSimulacionAutomaticaSensores() {
+      simulacionSensoresActiva = !simulacionSensoresActiva;
+      vibrar(25);
+      const btn = document.getElementById('btn-toggle-simulacion-auto');
+      const icono = document.getElementById('icono-sim-auto');
+      const txt = document.getElementById('txt-sim-auto');
+
+      if (simulacionSensoresActiva) {
+        if (btn) btn.className = 'text-xs bg-rose-700 hover:bg-rose-800 text-white font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition shadow animate-pulse';
+        if (icono) icono.setAttribute('data-lucide', 'pause');
+        if (txt) txt.innerText = 'Pausar Monitoreo';
+        mostrarToast('Monitoreo Continuo Activo', 'Transmisión de telemetría de contenedores en tiempo real.');
+        
+        // Ciclo inmediato y programación periódica
+        ejecutarPasoSimulacionSensor();
+        timerSimulacionSensores = setInterval(ejecutarPasoSimulacionSensor, 4000);
+      } else {
+        if (timerSimulacionSensores) {
+          clearInterval(timerSimulacionSensores);
+          timerSimulacionSensores = null;
+        }
+        if (btn) btn.className = 'text-xs bg-sky-700 hover:bg-sky-800 text-white font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition shadow';
+        if (icono) icono.setAttribute('data-lucide', 'play');
+        if (txt) txt.innerText = 'Monitoreo Continuo en Vivo';
+        mostrarToast('Monitoreo en Pausa', 'Actualización de niveles pausada.');
+      }
+      lucide.createIcons();
+    }
+
+    function ejecutarPasoSimulacionSensor() {
+      if (!estadoApp.ecopuntos || estadoApp.ecopuntos.length === 0) return;
+      const eco = estadoApp.ecopuntos[indiceSensorSimulado % estadoApp.ecopuntos.length];
+      indiceSensorSimulado++;
+
+      // Simular acumulación natural de residuos (incremento entre 3% y 8%)
+      let nuevoPct = (eco.capacidad || 40) + Math.floor(Math.random() * 7) + 2;
+      
+      // Si el contenedor ya superó el 95%, simular vaciado por recolección
+      if (nuevoPct > 95) {
+        nuevoPct = Math.floor(Math.random() * 15) + 12; // vaciado a 12-27%
+        mostrarToast('Vaciado Completado', `Cuadrilla vació el contenedor de ${eco.nombre}.`);
+      }
+
+      eco.capacidad = nuevoPct;
+      eco.temperatura = (21.5 + Math.random() * 5.5).toFixed(1);
+      eco.bateria = Math.max(85, Math.min(100, (eco.bateria || 95) + (Math.random() > 0.6 ? -1 : 0)));
+
+      const esCritico = nuevoPct >= 80;
+      const payload = {
+        dispositivo_id: eco.sensorId || `SF-IOT-${eco.id.slice(-3)}`,
+        contenedor_id: eco.id,
+        nombre: eco.nombre,
+        telemetria: {
+          distancia_sensor_cm: Math.round(150 * (1 - nuevoPct / 100)),
+          porcentaje_llenado: nuevoPct,
+          temperatura_celsius: parseFloat(eco.temperatura),
+          bateria_porcentaje: eco.bateria
+        },
+        alarmas: {
+          requiere_vaciado_urgente: esCritico,
+          temperatura_alta: parseFloat(eco.temperatura) >= 45
+        },
+        red: {
+          protocolo: "MQTT v5.0 / WebSockets",
+          cloud: "Google Cloud Firestore"
+        },
+        timestamp_unix: Math.floor(Date.now() / 1000)
+      };
+
+      agregarLogConsolaMQTT(`sf/contenedores/${eco.id}/telemetria`, payload);
+
+      // Sincronizar en Cloud Firestore si está inicializado
+      if (dbFirebase) {
+        try {
+          dbFirebase.collection('telemetria_contenedores').doc(eco.id).set({
+            dispositivoId: eco.sensorId || `SF-IOT-${eco.id.slice(-3)}`,
+            nombre: eco.nombre,
+            porcentajeLlenado: nuevoPct,
+            temperaturaCelsius: parseFloat(eco.temperatura),
+            bateriaPorcentaje: eco.bateria,
+            alertaDesborde: esCritico,
+            ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).catch(() => {});
+        } catch (e) {}
+      }
+
+      if (esCritico) {
+        vibrar([60, 40, 60]);
+      }
+
+      guardarEnLocalStorage();
+      renderizarTelemetriaIoTAutoridad();
+      renderizarCampanasCiudadano();
+      window.mapaInstance = mapaInstance;
+      dibujarPuntosEnMapa();
+      window.capasPuntos = capasPuntos;
+    }
+
+    function forzarDesbordeInmediato() {
+      vibrar([100, 50, 100]);
+      const eco = estadoApp.ecopuntos.find(e => e.id === 'ECO-SF-001') || estadoApp.ecopuntos[0];
+      if (!eco) return;
+
+      eco.capacidad = 96;
+      eco.temperatura = '27.4';
+      eco.bateria = 94;
+
+      const payload = {
+        dispositivo_id: eco.sensorId || 'SF-IOT-001',
+        contenedor_id: eco.id,
+        nombre: eco.nombre,
+        telemetria: {
+          distancia_sensor_cm: 6,
+          porcentaje_llenado: 96,
+          temperatura_celsius: 27.4,
+          bateria_porcentaje: 94
+        },
+        alarmas: {
+          requiere_vaciado_urgente: true,
+          temperatura_alta: false
+        },
+        red: { protocolo: "MQTT v5.0", cloud: "Google Cloud Firestore" },
+        timestamp_unix: Math.floor(Date.now() / 1000)
+      };
+
+      agregarLogConsolaMQTT(`sf/contenedores/${eco.id}/telemetria`, payload);
+
+      if (dbFirebase) {
+        try {
+          dbFirebase.collection('telemetria_contenedores').doc(eco.id).set({
+            dispositivoId: eco.sensorId || 'SF-IOT-001',
+            nombre: eco.nombre,
+            porcentajeLlenado: 96,
+            temperaturaCelsius: 27.4,
+            alertaDesborde: true,
+            ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).catch(() => {});
+        } catch (e) {}
+      }
+
+      guardarEnLocalStorage();
+      renderizarTelemetriaIoTAutoridad();
+      renderizarCampanasCiudadano();
+      window.mapaInstance = mapaInstance;
+      dibujarPuntosEnMapa();
+      window.capasPuntos = capasPuntos;
+      mostrarToast('Alerta de Llenado Crítico', `El contenedor ${eco.nombre} alcanzó el 96%. Se activó alerta de vaciado.`);
+    }
+
+    function normalizarTodosLosContenedores() {
+      vibrar(20);
+      estadoApp.ecopuntos.forEach((e, idx) => {
+        e.capacidad = 25 + idx * 8; // 25%, 33%, 41%, etc.
+        e.temperatura = (22.0 + idx * 0.5).toFixed(1);
+      });
+
+      if (dbFirebase) {
+        try {
+          estadoApp.ecopuntos.forEach(e => {
+            dbFirebase.collection('telemetria_contenedores').doc(e.id).set({
+              porcentajeLlenado: e.capacidad,
+              alertaDesborde: false,
+              ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).catch(() => {});
+          });
+        } catch (e) {}
+      }
+
+      guardarEnLocalStorage();
+      renderizarTelemetriaIoTAutoridad();
+      renderizarCampanasCiudadano();
+      window.mapaInstance = mapaInstance;
+      dibujarPuntosEnMapa();
+      window.capasPuntos = capasPuntos;
+      mostrarToast('Vaciado Registrado', 'Se actualizaron los contenedores a niveles operativos tras la recolección.');
+    }
+
+    function renderizarTelemetriaIoTAutoridad() {
+      const grid = document.getElementById('grid-telemetria-iot');
+      const select = document.getElementById('sim-mqtt-select');
+      if (!grid) return;
+
+      grid.innerHTML = estadoApp.ecopuntos.map(e => {
+        const critico = e.capacidad >= 80;
+        const medio = e.capacidad > 60;
+        const colorBarra = critico ? 'bg-rose-500' : medio ? 'bg-amber-500' : 'bg-emerald-500';
+        const colorBorde = critico ? 'border-rose-300 bg-rose-50/40 ring-2 ring-rose-300/50' : medio ? 'border-amber-200 bg-amber-50/20' : 'border-slate-200 bg-white';
+        const distCm = Math.round(150 * (1 - e.capacidad / 100));
+
+        return `
+          <div class="p-3 rounded-xl border ${colorBorde} flex flex-col justify-between text-xs transition shadow-sm hover:shadow">
+            <div>
+              <div class="flex items-center justify-between text-[12px] text-slate-500 mb-1">
+                <span class="font-bold text-slate-600">Punto ${escapeHTML(e.id.slice(-3))}</span>
+                <span class="px-1.5 py-0.5 rounded font-bold text-[12px] ${critico ? 'bg-rose-100 text-rose-700 animate-pulse' : 'bg-emerald-100 text-emerald-700'}">
+                  ${critico ? 'DESBORDE' : 'OPERATIVO'}
+                </span>
+              </div>
+              <h5 class="font-bold text-slate-800 text-[13px] truncate" title="${escapeHTML(e.nombre)}">${escapeHTML(e.nombre)}</h5>
+              <div class="mt-2">
+                <div class="flex justify-between items-baseline mb-0.5">
+                  <span class="text-[12px] text-slate-500">Llenado:</span>
+                  <span class="text-sm font-black ${critico ? 'text-rose-600' : medio ? 'text-amber-600' : 'text-slate-800'}">${e.capacidad}%</span>
+                </div>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div class="${colorBarra} h-full transition-all duration-500" style="width: ${e.capacidad}%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2.5 pt-2 border-t border-slate-100/80 text-[12px] text-slate-500 space-y-0.5">
+              <div class="flex justify-between"><span>Espacio libre:</span> <span class="font-semibold text-slate-700">${distCm} cm</span></div>
+              <div class="flex justify-between"><span>Temperatura:</span> <span class="font-semibold text-slate-700">${e.temperatura || 22.4} °C</span></div>
+              <div class="flex justify-between"><span>Batería:</span> <span class="font-semibold text-slate-700">${e.bateria || 92}%</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (select && select.children.length === 0) {
+        select.innerHTML = estadoApp.ecopuntos.map(e => `
+          <option value="${e.id}">${escapeHTML(e.nombre)} (${escapeHTML(e.tipo)})</option>
+        `).join('');
+      }
+    }
+
+    function setSimMqttPreset(valor) {
+      const slider = document.getElementById('sim-mqtt-slider');
+      const lbl = document.getElementById('sim-mqtt-valor-lbl');
+      if (slider) slider.value = valor;
+      if (lbl) lbl.innerText = valor + '%' + (valor >= 80 ? ' (Crítico)' : valor > 60 ? ' (Alerta)' : ' (Normal)');
+    }
+
+    function ejecutarPublicacionMQTTSimulada() {
+      const select = document.getElementById('sim-mqtt-select');
+      const slider = document.getElementById('sim-mqtt-slider');
+      if (!select || !slider) return;
+
+      const cid = select.value;
+      const nuevoPct = parseInt(slider.value, 10);
+      const eco = estadoApp.ecopuntos.find(e => e.id === cid);
+      if (!eco) return;
+
+      eco.capacidad = nuevoPct;
+      eco.temperatura = (21.0 + (nuevoPct / 100) * 7.5).toFixed(1);
+
+      const payload = {
+        dispositivo_id: eco.sensorId || `SF-IOT-${eco.id.slice(-3)}`,
+        contenedor_id: eco.id,
+        nombre: eco.nombre,
+        telemetria: {
+          distancia_sensor_cm: Math.round(150 * (1 - nuevoPct / 100)),
+          porcentaje_llenado: nuevoPct,
+          temperatura_celsius: parseFloat(eco.temperatura),
+          bateria_porcentaje: eco.bateria || 92
+        },
+        alarmas: {
+          requiere_vaciado_urgente: nuevoPct >= 80,
+          temperatura_alta: parseFloat(eco.temperatura) >= 45
+        },
+        red: {
+          protocolo: "MQTT v5.0",
+          qos: 1,
+          broker: "mosquitto-service.produccion-residuos:1883"
+        },
+        timestamp_unix: Math.floor(Date.now() / 1000)
+      };
+
+      agregarLogConsolaMQTT(`sf/contenedores/${eco.id}/telemetria`, payload);
+
+      if (nuevoPct >= 80) {
+        mostrarToast('Alerta: Contenedor Crítico', `El contenedor ${eco.nombre} superó el 80% (${nuevoPct}%). Se requiere vaciado.`);
+      } else {
+        mostrarToast('Medición Registrada', `${eco.nombre}: Nivel actualizado al ${nuevoPct}%.`);
+      }
+
+      guardarEnLocalStorage();
+      renderizarTodo();
+    }
+
+    function agregarLogConsolaMQTT(topic, data) {
+      const c = document.getElementById('consola-mqtt-log');
+      if (!c) return;
+      const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const esCritico = (data.alarmas && data.alarmas.requiere_vaciado_urgente) || (data.telemetria && data.telemetria.porcentaje_llenado >= 80);
+      const nombrePunto = data.nombre || 'Contenedor';
+      const pct = data.telemetria ? data.telemetria.porcentaje_llenado : (data.volumen_pct !== undefined ? data.volumen_pct : '--');
+      const temp = data.telemetria ? data.telemetria.temperatura_celsius : (data.temperatura_c !== undefined ? data.temperatura_c : '22.0');
+      const bat = data.telemetria ? data.telemetria.bateria_porcentaje : (data.bateria_pct !== undefined ? data.bateria_pct : '95');
+
+      const logItem = document.createElement('div');
+      logItem.className = 'p-2 rounded-xl bg-slate-800/80 border-l-4 ' + (esCritico ? 'border-rose-500' : 'border-emerald-500') + ' text-xs space-y-1 transition';
+      logItem.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="font-bold ${esCritico ? 'text-rose-300' : 'text-emerald-300'}">${escapeHTML(nombrePunto)}</span>
+          <span class="text-slate-400 text-[12px]">${hora}</span>
+        </div>
+        <div class="flex items-center justify-between text-[13px] text-slate-300">
+          <span>Llenado: <strong class="${esCritico ? 'text-rose-400 font-black' : 'text-white'}">${pct}%</strong> ${esCritico ? '(Alerta de Desborde)' : '(Operativo)'}</span>
+          <span class="text-slate-400 text-[12px]">Temp: ${temp}°C · Batería: ${bat}%</span>
+        </div>
+      `;
+
+      c.prepend(logItem);
+      while (c.children.length > 5) {
+        c.removeChild(c.lastChild);
+      }
+    }
+
+    function limpiarConsolaMQTT() {
+      const c = document.getElementById('consola-mqtt-log');
+      if (c) c.innerHTML = '<p class="text-slate-400 italic text-[13px] p-2 text-center">Historial reiniciado. Esperando nuevas lecturas...</p>';
+    }
+
+    // Render Recolector
+    let capaRutaCuadrilla = null;
+    let firmaRutaCuadrilla = '';
+
+    function renderizarRecolector() {
+      const cont = document.getElementById('lista-paradas-recolector');
+      const conteo = document.getElementById('conteo-paradas-recolector');
+      if (!cont) return;
+
+      // Paradas activas: contenedores a vaciar (>25%) y retiros asignados a este móvil
+      const paradasEcopuntos = estadoApp.ecopuntos
+        .filter(e => e.capacidad > 25)
+        .map(e => ({ id: e.id, nombre: e.nombre, tipo: 'Vaciado Contenedor', dir: e.direccion, estado: 'pendiente', capacidad: e.capacidad, coords: e.coords }));
+
+      const paradasSolicitudes = estadoApp.solicitudes
+        .filter(s => s.estado === 'en_camino' && esMiCuadrilla(s.cuadrilla))
+        .map(s => ({ id: s.id, nombre: s.subcategoria, tipo: 'Retiro Domiciliario', dir: s.direccion, estado: 'en_camino', coords: s.coords || COORDS_SF }));
+
+      // Orden de visita según la ruta optimizada (vecino más cercano + 2-opt)
+      const base = { id: 'BASE-MUNI', nombre: 'Centro Operativo San Francisco', coords: COORDS_SF };
+      const tsp = resolverTSP(base, [...paradasEcopuntos, ...paradasSolicitudes]);
+      const porId = Object.fromEntries([...paradasEcopuntos, ...paradasSolicitudes].map(x => [x.id, x]));
+      const paradas = tsp.ruta.slice(1, -1).map(x => porId[x.id]).filter(Boolean);
+      conteo.innerText = `${paradas.length} paradas${paradas.length ? ` · ${tsp.distanciaKm} km` : ''}`;
+
+      // Trazado de la ruta en el mapa de la cuadrilla
+      const sesion = obtenerSesionActual();
+      if (capaRutaCuadrilla && mapaInstance) { mapaInstance.removeLayer(capaRutaCuadrilla); capaRutaCuadrilla = null; }
+      if (mapaInstance && sesion && sesion.rol === 'recolector' && paradas.length) {
+        const rectaCuadrilla = L.polyline(tsp.ruta.map(x => x.coords), { color: '#ea580c', weight: 4, opacity: 0.9, dashArray: '8, 8' }).addTo(mapaInstance);
+        capaRutaCuadrilla = rectaCuadrilla;
+        rutaPorCalles(tsp.ruta.map(x => x.coords)).then(r => {
+          if (capaRutaCuadrilla !== rectaCuadrilla || !mapaInstance) return;
+          mapaInstance.removeLayer(rectaCuadrilla);
+          capaRutaCuadrilla = L.polyline(r.puntos, { color: '#ea580c', weight: 5, opacity: 0.9 }).addTo(mapaInstance);
+          conteo.innerText = `${paradas.length} paradas · ${r.km} km por calles`;
+        }).catch(() => {});
+        const firma = paradas.map(x => x.id).join('|');
+        if (firma !== firmaRutaCuadrilla) {
+          firmaRutaCuadrilla = firma;
+          mapaInstance.fitBounds(capaRutaCuadrilla.getBounds(), { padding: [40, 40] });
+        }
+      }
+
+      cont.innerHTML = paradas.map((p, idx) => `
+        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between text-xs hover:border-orange-400 transition">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="w-5 h-5 rounded-full bg-orange-600 text-white font-bold flex items-center justify-center text-[12px]">${idx + 1}</span>
+              <span class="font-bold text-slate-800">${escapeHTML(p.nombre)}</span>
+              ${p.capacidad >= 80 ? '<span class="text-[12px] font-bold bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded animate-pulse">URGENTE</span>' : ''}
+            </div>
+            <p class="text-slate-500 text-[13px] mt-1">${escapeHTML(p.tipo)} • ${escapeHTML(p.dir)}</p>
+            <span class="text-[12px] font-mono text-orange-700 font-semibold bg-orange-100 px-1.5 py-0.5 rounded mt-1 inline-block">Código ${p.id}</span>
+          </div>
+          <button onclick="document.getElementById('input-qr-manual').value='${p.id}'; validarIdentificadorQR('${p.id}')" title="Cargar parada" class="text-orange-700 hover:text-orange-900 bg-orange-100 p-1.5 rounded-lg">
+            <i data-lucide="scan" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('') || '<p class="text-xs text-slate-400 italic p-2">No hay paradas pendientes en el turno actual.</p>';
+    }
+
+    // ==========================================================
+    // ALGORITMO TSP REAL (Fórmula Haversine + Nearest Neighbor)
+    // ==========================================================
+    function calcularDistanciaHaversine(c1, c2) {
+      const R = 6371; // Radio medio de la Tierra en km
+      const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+      const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(c1[0] * Math.PI / 180) * Math.cos(c2[0] * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function longitudRutaKm(puntos) {
+      let total = 0;
+      for (let i = 0; i < puntos.length - 1; i++) total += calcularDistanciaHaversine(puntos[i].coords, puntos[i + 1].coords);
+      return total;
+    }
+
+    // Trazado por calles con el servicio público OSRM. Si no responde, el mapa conserva el trazo en línea recta.
+    const cacheRutasCalles = new Map();
+    function rutaPorCalles(coords) {
+      const clave = coords.map(c => c.map(n => n.toFixed(5)).join(',')).join(';');
+      if (!cacheRutasCalles.has(clave)) {
+        const url = 'https://router.project-osrm.org/route/v1/driving/' + coords.map(c => `${c[1]},${c[0]}`).join(';') + '?overview=full&geometries=geojson';
+        const control = new AbortController();
+        const plazo = setTimeout(() => control.abort(), 7000);
+        const pedido = fetch(url, { signal: control.signal })
+          .then(r => r.json())
+          .then(d => {
+            if (!d.routes || !d.routes[0]) throw new Error('sin ruta');
+            return { puntos: d.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]), km: Math.round(d.routes[0].distance / 10) / 100 };
+          })
+          .finally(() => clearTimeout(plazo));
+        cacheRutasCalles.set(clave, pedido);
+        pedido.catch(() => cacheRutasCalles.delete(clave));
+      }
+      return cacheRutasCalles.get(clave);
+    }
+
+    function resolverTSP(inicio, destinos) {
+      if (destinos.length === 0) return { ruta: [inicio], distanciaKm: 0, distanciaInicialKm: 0 };
+
+      // 1. Ruta inicial por vecino más cercano
+      let noVisitados = [...destinos];
+      let ruta = [inicio];
+      let actual = inicio.coords;
+      while (noVisitados.length > 0) {
+        let mejorIdx = 0;
+        let menorD = Infinity;
+        for (let i = 0; i < noVisitados.length; i++) {
+          const d = calcularDistanciaHaversine(actual, noVisitados[i].coords);
+          if (d < menorD) { menorD = d; mejorIdx = i; }
+        }
+        actual = noVisitados[mejorIdx].coords;
+        ruta.push(noVisitados.splice(mejorIdx, 1)[0]);
+      }
+      // Cierre de circuito hacia el punto verde base
+      ruta.push(estadoApp.ecopuntos[0]);
+      const distanciaInicialKm = longitudRutaKm(ruta);
+
+      // 2. Optimización 2-opt: se invierten tramos mientras acorten el recorrido (extremos fijos)
+      let mejora = true;
+      while (mejora) {
+        mejora = false;
+        for (let i = 1; i < ruta.length - 2; i++) {
+          for (let j = i + 1; j < ruta.length - 1; j++) {
+            const a = ruta[i - 1].coords, b = ruta[i].coords, c = ruta[j].coords, d = ruta[j + 1].coords;
+            const actualD = calcularDistanciaHaversine(a, b) + calcularDistanciaHaversine(c, d);
+            const nuevaD = calcularDistanciaHaversine(a, c) + calcularDistanciaHaversine(b, d);
+            if (nuevaD < actualD - 1e-9) {
+              ruta = [...ruta.slice(0, i), ...ruta.slice(i, j + 1).reverse(), ...ruta.slice(j + 1)];
+              mejora = true;
+            }
+          }
+        }
+      }
+
+      return {
+        ruta,
+        distanciaKm: parseFloat(longitudRutaKm(ruta).toFixed(2)),
+        distanciaInicialKm: parseFloat(distanciaInicialKm.toFixed(2))
+      };
+    }
+
+    // Despacho de Rutas respetando checkboxes
+    // Actualiza en la nube el estado de una solicitud (despacho, recolección)
+    function sincronizarEstadoSolicitud(solicitudId, cambios) {
+      if (!dbFirebase || !authFirebase || !authFirebase.currentUser) return;
+      dbFirebase.collection('solicitudes_residuos').where('solicitudId', '==', solicitudId).limit(1).get()
+        .then(snap => { if (!snap.empty) return snap.docs[0].ref.update(cambios); })
+        .catch(err => console.warn('[Firestore AVISO]:', err.message));
+    }
+
+    // Número de móvil de la cuadrilla con sesión iniciada (ej: "03")
+    function numeroUnidad(sesion) {
+      const m = ((sesion && sesion.unidad) || '').match(/#\s*(\d+)/);
+      return m ? m[1] : null;
+    }
+
+    function esMiCuadrilla(nombreCuadrilla) {
+      const n = numeroUnidad(obtenerSesionActual());
+      return !!n && typeof nombreCuadrilla === 'string' && nombreCuadrilla.includes('Móvil ' + n);
+    }
+
+    function detenerEscuchasNube() {
+      desuscribirNube.forEach(f => f());
+      desuscribirNube = [];
+    }
+
+    // Avisa en pantalla y con notificación nativa
+    function avisarUsuario(titulo, mensaje) {
+      mostrarToast(titulo, mensaje);
+      dispararNotificacionNativa(titulo, mensaje);
+    }
+
+    // Sincronización en vivo con la nube: campañas (todos los roles), solicitudes e incidentes
+    // (autoridad y cuadrilla). Lo que llega después de la carga inicial se avisa al usuario.
+    function escucharNube() {
+      detenerEscuchasNube();
+      const sesion = obtenerSesionActual();
+      if (!dbFirebase || !authFirebase || !authFirebase.currentUser || !sesion) return;
+      const rol = sesion.rol;
+      const aviso = err => console.warn('[Firestore AVISO]:', err.message);
+
+      // Campañas y avisos municipales
+      let primeraCampana = true;
+      desuscribirNube.push(dbFirebase.collection('notificaciones').onSnapshot(snap => {
+        let hayCambios = false;
+        snap.docChanges().forEach(ch => {
+          if (ch.type !== 'added') return;
+          const d = ch.doc.data();
+          const cid = d.campanaId || ch.doc.id;
+          if (estadoApp.campanas.some(c => c.id === cid)) return;
+          estadoApp.campanas.unshift({ id: cid, titulo: d.titulo, desc: d.desc, fecha: d.fecha || 'Hoy' });
+          hayCambios = true;
+          if (!primeraCampana) avisarUsuario(d.titulo, d.desc);
+        });
+        primeraCampana = false;
+        if (hayCambios) { guardarEnLocalStorage(); renderizarTodo(); }
+      }, aviso));
+
+      // Solicitudes de retiro: autoridad y cuadrilla ven todas, el vecino solo las suyas
+      const ORDEN_ESTADO = { pendiente: 0, en_camino: 1, recolectado: 2, cancelado: 2 };
+      let primeraSolicitud = true;
+      const consultaSolicitudes = rol === 'ciudadano'
+        ? dbFirebase.collection('solicitudes_residuos').where('usuarioId', '==', authFirebase.currentUser.uid)
+        : dbFirebase.collection('solicitudes_residuos');
+      desuscribirNube.push(consultaSolicitudes.onSnapshot(snap => {
+        let hayCambios = false;
+        snap.docChanges().forEach(ch => {
+          const d = ch.doc.data();
+          if (!d.solicitudId) return;
+          const local = estadoApp.solicitudes.find(x => x.id === d.solicitudId);
+          const estadoPrevio = local ? local.estado : null;
+          if (!local) {
+            estadoApp.solicitudes.unshift({
+              id: d.solicitudId, usuario: d.nombreCiudadano || 'Vecino', tipo: d.tipoResiduo,
+              subcategoria: d.subcategoria, cantidad: d.cantidad, direccion: d.direccion,
+              fecha: d.fechaSugerida || 'Próximo turno', observaciones: d.observaciones || '',
+              coords: d.coords || COORDS_SF, estado: d.estado || 'pendiente', cuadrilla: d.cuadrilla || null
+            });
+            hayCambios = true;
+            if (!primeraSolicitud && rol === 'autoridad') {
+              avisarUsuario('Nueva Solicitud de Retiro', `${d.nombreCiudadano || 'Un vecino'} pidió retiro en ${d.direccion}.`);
+            }
+          } else if (d.estado && (ORDEN_ESTADO[d.estado] || 0) > (ORDEN_ESTADO[estadoPrevio] || 0)) {
+            local.estado = d.estado;
+            local.cuadrilla = d.cuadrilla || local.cuadrilla;
+            hayCambios = true;
+            if (!primeraSolicitud && rol === 'ciudadano') {
+              const textos = { en_camino: 'ya tiene una cuadrilla en camino', recolectado: 'fue recolectada', cancelado: 'fue cancelada' };
+              avisarUsuario('Novedades de tu Solicitud', `Tu solicitud de ${local.subcategoria || 'retiro'} ${textos[d.estado] || 'cambió de estado'}.`);
+            }
+          }
+          const ahoraEnCamino = (local ? local.estado : d.estado) === 'en_camino';
+          if (!primeraSolicitud && rol === 'recolector' && ahoraEnCamino && estadoPrevio !== 'en_camino' && esMiCuadrilla(d.cuadrilla)) {
+            avisarUsuario('Nueva Parada Asignada', `${d.subcategoria || 'Retiro'} en ${d.direccion}.`);
+          }
+        });
+        primeraSolicitud = false;
+        if (hayCambios) { guardarEnLocalStorage(); renderizarTodo(); }
+      }, aviso));
+
+      // Incidentes reportados por la cuadrilla
+      if (rol !== 'autoridad' && rol !== 'recolector') return;
+      let primerIncidente = true;
+      desuscribirNube.push(dbFirebase.collection('incidentes').onSnapshot(snap => {
+        let hayCambios = false;
+        snap.docChanges().forEach(ch => {
+          const d = ch.doc.data();
+          if (!d.incidenteId) return;
+          const local = estadoApp.incidentes.find(i => i.id === d.incidenteId);
+          if (!local) {
+            estadoApp.incidentes.unshift({
+              id: d.incidenteId, tipo: d.tipo, ubicacion: d.ubicacion, coords: d.coords || COORDS_SF,
+              gravedad: d.gravedad, estado: d.estado || 'abierto', fecha: d.fecha || 'Ahora mismo', descripcion: d.descripcion || ''
+            });
+            hayCambios = true;
+            if (!primerIncidente && rol === 'autoridad') {
+              avisarUsuario('Nuevo Incidente Reportado', `${d.tipo} en ${d.ubicacion}.`);
+            }
+          } else if (d.estado && local.estado !== d.estado) {
+            local.estado = d.estado;
+            hayCambios = true;
+          }
+        });
+        primerIncidente = false;
+        if (hayCambios) { guardarEnLocalStorage(); renderizarTodo(); }
+      }, aviso));
+    }
+
+    function optimizarRutaAutoridad() {
+      const cuadrilla = document.getElementById('select-cuadrilla').value;
+      const checkboxes = document.querySelectorAll('.chk-despacho-solicitud:checked');
+      const idsSeleccionados = Array.from(checkboxes).map(cb => cb.value);
+
+      if (idsSeleccionados.length === 0) {
+        mostrarToast('Selección Requerida', 'Marcá al menos una solicitud con el casillero para despachar.');
+        return;
+      }
+
+      const seleccionadas = estadoApp.solicitudes.filter(s => idsSeleccionados.includes(s.id));
+      const baseInicio = { id: 'BASE-MUNI', nombre: 'Centro Operativo San Francisco', coords: COORDS_SF };
+      
+      const resultadoTSP = resolverTSP(baseInicio, seleccionadas);
+
+      // Actualizar estado de las solicitudes seleccionadas
+      seleccionadas.forEach(s => {
+        s.estado = 'en_camino';
+        s.cuadrilla = cuadrilla;
+        sincronizarEstadoSolicitud(s.id, { estado: 'en_camino', cuadrilla });
+      });
+
+      // Trazar polilínea en mapa
+      if (capaRutaPolilinea && mapaInstance) mapaInstance.removeLayer(capaRutaPolilinea);
+      const coordsPolilinea = resultadoTSP.ruta.map(p => p.coords);
+      if (mapaInstance) {
+        const rectaAutoridad = L.polyline(coordsPolilinea, { color: '#0284c7', weight: 4, opacity: 0.9, dashArray: '8, 8' }).addTo(mapaInstance);
+        capaRutaPolilinea = rectaAutoridad;
+        mapaInstance.fitBounds(rectaAutoridad.getBounds(), { padding: [40, 40] });
+        rutaPorCalles(coordsPolilinea).then(r => {
+          if (capaRutaPolilinea !== rectaAutoridad || !mapaInstance) return;
+          mapaInstance.removeLayer(rectaAutoridad);
+          capaRutaPolilinea = L.polyline(r.puntos, { color: '#0284c7', weight: 5, opacity: 0.9 }).addTo(mapaInstance);
+          mapaInstance.fitBounds(capaRutaPolilinea.getBounds(), { padding: [40, 40] });
+          mostrarToast('Recorrido por calles', `El móvil recorrerá ${r.km} km siguiendo las calles.`);
+        }).catch(() => {});
+      }
+
+      guardarEnLocalStorage();
+      renderizarTodo();
+      mostrarToast('Ruta de Recolección Despachada', `${seleccionadas.length} paradas asignadas a ${cuadrilla}. Recorrido óptimo: ${resultadoTSP.distanciaKm} km.${resultadoTSP.distanciaInicialKm > resultadoTSP.distanciaKm ? ` (2-opt ahorró ${(resultadoTSP.distanciaInicialKm - resultadoTSP.distanciaKm).toFixed(2)} km)` : ''}`);
+    }
+
+    // ==========================================================
+    // ESCÁNER QR CON HTML5-QRCODE Y VALIDACIÓN ESTRICTA
+    // ==========================================================
+    // La librería del lector pesa ~100 KB y solo hace falta al escanear: se descarga la primera vez
+    let cargaLectorQR = null;
+    function cargarLectorQR() {
+      if (typeof Html5Qrcode !== 'undefined') return Promise.resolve();
+      if (!cargaLectorQR) {
+        cargaLectorQR = new Promise((resolver, rechazar) => {
+          const el = document.createElement('script');
+          el.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+          el.onload = resolver;
+          el.onerror = () => { cargaLectorQR = null; rechazar(new Error('No se pudo cargar el lector QR')); };
+          document.head.appendChild(el);
+        });
+      }
+      return cargaLectorQR;
+    }
+
+    async function abrirModalScannerQR() {
+      document.getElementById('modal-scanner').classList.remove('hidden');
+      const lector = document.getElementById('qr-reader');
+      lector.innerHTML = '<div class="text-xs text-slate-300 p-4">Iniciando cámara de dispositivo...</div>';
+
+      try {
+        await cargarLectorQR().catch(() => {});
+        if (typeof Html5Qrcode !== 'undefined') {
+          scannerInstancia = new Html5Qrcode("qr-reader");
+          scannerInstancia.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (codigo) => {
+              cerrarModalScanner();
+              procesarLecturaQR(codigo);
+            },
+            () => {} // Escaneo continuo silencioso
+          ).catch(err => {
+            console.warn('Cámara no habilitada en este entorno:', err);
+            lector.innerHTML = '<div class="p-4 text-center text-xs text-amber-300">Cámara web no accesible en este dispositivo. Podés ingresar el identificador del contenedor manualmente en el campo inferior.</div>';
+          });
+        }
+      } catch (e) {
+        console.error('Error inicializando Html5Qrcode:', e);
+      }
+    }
+
+    function cerrarModalScanner() {
+      document.getElementById('modal-scanner').classList.add('hidden');
+      if (scannerInstancia && scannerInstancia.isScanning) {
+        scannerInstancia.stop().then(() => scannerInstancia.clear()).catch(e => console.error(e));
+      }
+    }
+
+    function procesarLecturaQR(codigo) {
+      cerrarModalScanner();
+      document.getElementById('input-qr-manual').value = codigo;
+      validarIdentificadorQR(codigo);
+    }
+
+    // Validación estricta con feedback diferenciado y tolerancia a URIs/URLs
+    function validarIdentificadorQR(codigo) {
+      if (!codigo || !codigo.trim()) {
+        mostrarToast('Código Requerido', 'Ingresá o escaneá un identificador de contenedor.');
+        return;
+      }
+
+      let cod = (codigo || '').trim();
+      if (cod.includes('=')) {
+        const match = cod.match(/[?&]id=([^&]+)/i);
+        if (match) cod = match[1];
+      } else if (cod.includes('://')) {
+        cod = cod.split('/').pop().replace('checkin?', '');
+      }
+      cod = cod.toUpperCase();
+
+      const eco = estadoApp.ecopuntos.find(e => e.id.toUpperCase() === cod);
+      const sol = estadoApp.solicitudes.find(s => s.id.toUpperCase() === cod);
+      const box = document.getElementById('box-punto-validado');
+      const txtNombre = document.getElementById('txt-punto-validado-nombre');
+      const txtDetalle = document.getElementById('txt-punto-validado-detalle');
+
+      box.classList.remove('hidden');
+      if (eco) {
+        box.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl block';
+        txtNombre.className = 'text-xs font-bold text-emerald-900';
+        txtNombre.innerText = `Punto Validado: ${eco.nombre}`;
+        txtDetalle.innerText = `Ecopunto registrado. Nivel de llenado: ${eco.capacidad}%. Ubicación verificada en San Francisco.`;
+        document.getElementById('input-pesaje-recolector').value = (eco.capacidad * 0.75).toFixed(1);
+        mostrarToast('Código QR Verificado', `Ecopunto identificado: ${eco.nombre}`);
+      } else if (sol) {
+        box.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl block';
+        txtNombre.className = 'text-xs font-bold text-emerald-900';
+        txtNombre.innerText = `Solicitud Validada: #${sol.id} (${sol.subcategoria})`;
+        txtDetalle.innerText = `Vecino: ${sol.usuario} (${sol.direccion}). Cantidad: ${sol.cantidad}.`;
+        document.getElementById('input-pesaje-recolector').value = 16.5;
+        mostrarToast('Código QR Verificado', `Solicitud #${sol.id} identificada correctamente.`);
+      } else {
+        box.className = 'mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl block';
+        txtNombre.className = 'text-xs font-bold text-rose-900';
+        txtNombre.innerText = `Identificador No Registrado: ${cod}`;
+        txtDetalle.innerText = 'El código escaneado no coincide con ningún contenedor ni solicitud en San Francisco.';
+        document.getElementById('input-pesaje-recolector').value = '';
+        mostrarToast('Código Inválido', 'El ID ingresado no existe en el catastro municipal.');
+      }
+    }
+
+    // Confirmación de recolección en territorio
+    const RADIO_GEOCERCA_M = 35;
+
+    // Compara la posición del dispositivo con la del punto: dentro, fuera o sin GPS disponible
+    function verificarGeocerca(coords) {
+      return new Promise(resolve => {
+        if (!navigator.geolocation || !coords) return resolve({ estado: 'sin_gps' });
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const metros = Math.round(calcularDistanciaHaversine([pos.coords.latitude, pos.coords.longitude], coords) * 1000);
+            resolve({ estado: metros <= RADIO_GEOCERCA_M ? 'dentro' : 'fuera', metros });
+          },
+          () => resolve({ estado: 'sin_gps' }),
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+        );
+      });
+    }
+
+    async function confirmarRecoleccionEnTerritorio() {
+      let codigo = (document.getElementById('input-qr-manual').value || '').trim();
+      if (codigo.includes('=')) {
+        const match = codigo.match(/[?&]id=([^&]+)/i);
+        if (match) codigo = match[1];
+      } else if (codigo.includes('://')) {
+        codigo = codigo.split('/').pop().replace('checkin?', '');
+      }
+      codigo = codigo.toUpperCase();
+      const pesoStr = document.getElementById('input-pesaje-recolector').value;
+      const peso = parseFloat(pesoStr) || 12.0;
+
+      if (!codigo) {
+        mostrarToast('Validación Requerida', 'Validá el código QR del punto antes de confirmar.');
+        return;
+      }
+
+      const objetivo = estadoApp.solicitudes.find(s => s.id.toUpperCase() === codigo) ||
+        estadoApp.ecopuntos.find(e => e.id.toUpperCase() === codigo);
+      if (!objetivo) {
+        mostrarToast('Error de Cierre', 'No se puede confirmar recolección sobre un activo no registrado.');
+        return;
+      }
+
+      // Validación territorial: la cuadrilla debe estar a menos de 35 m del punto
+      const geo = await verificarGeocerca(objetivo.coords);
+      if (geo.estado === 'fuera' && !confirm(`Estás a ${geo.metros} m del punto (máximo ${RADIO_GEOCERCA_M} m).\n\nLa recolección quedará registrada fuera de la geocerca. ¿Confirmar igual?`)) {
+        return;
+      }
+
+      let encontrado = false;
+      const sol = estadoApp.solicitudes.find(s => s.id.toUpperCase() === codigo);
+      if (sol) {
+        sol.estado = 'recolectado';
+        sol.geocerca = geo.estado;
+        sincronizarEstadoSolicitud(sol.id, {
+          estado: 'recolectado', pesoRealKg: peso, qrVerificado: true,
+          recolectorId: authFirebase && authFirebase.currentUser ? authFirebase.currentUser.uid : null,
+          fechaRecoleccion: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        estadoApp.kilosRecolectadosUsuario = (estadoApp.kilosRecolectadosUsuario || 0) + peso;
+        if (estadoApp.usuariosRegistrados) {
+          const usr = estadoApp.usuariosRegistrados.find(u => u.nombre === sol.usuario);
+          if (usr) usr.puntosEco = (usr.puntosEco || 0) + peso;
+        }
+        const sesion = typeof obtenerSesionActual === 'function' ? obtenerSesionActual() : null;
+        if (sesion && (sesion.nombre === sol.usuario || sesion.rol === 'ciudadano')) {
+          sesion.puntosEco = (sesion.puntosEco || 0) + peso;
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sesion));
+        }
+        encontrado = true;
+        estadoApp.kilosTurnoCuadrilla = (estadoApp.kilosTurnoCuadrilla || 0) + peso;
+      }
+
+      const eco = estadoApp.ecopuntos.find(e => e.id.toUpperCase() === codigo);
+      if (eco) {
+        eco.capacidad = 10; // Vaciado
+        eco.ultimaGeocerca = geo.estado;
+        estadoApp.kilosRecolectadosUsuario = (estadoApp.kilosRecolectadosUsuario || 0) + peso;
+        const sesion = typeof obtenerSesionActual === 'function' ? obtenerSesionActual() : null;
+        if (sesion && sesion.rol === 'ciudadano') {
+          sesion.puntosEco = (sesion.puntosEco || 0) + peso;
+          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sesion));
+        }
+        encontrado = true;
+        estadoApp.kilosTurnoCuadrilla = (estadoApp.kilosTurnoCuadrilla || 0) + peso;
+      }
+
+      if (!encontrado) {
+        mostrarToast('Error de Cierre', 'No se puede confirmar recolección sobre un activo no registrado.');
+        return;
+      }
+
+      document.getElementById('box-punto-validado').classList.add('hidden');
+      document.getElementById('input-qr-manual').value = '';
+      document.getElementById('input-pesaje-recolector').value = '';
+      document.getElementById('input-notas-recolector').value = '';
+
+      guardarEnLocalStorage();
+      renderizarTodo();
+      const textoGeo = geo.estado === 'dentro' ? ` Validada en el lugar (a ${geo.metros} m).` : geo.estado === 'fuera' ? ` Registrada fuera de la geocerca (a ${geo.metros} m).` : '';
+      mostrarToast('Recolección Confirmada', `Se registraron ${peso} kg de residuos. Tarea cerrada exitosamente.${textoGeo}`);
+    }
+
+    // Subcategorías dinámicas según tipo
+    function actualizarSubcategoriasFormulario(tipo) {
+      const select = document.getElementById('reg-subcategoria');
+      if (!select) return;
+
+      const opciones = {
+        reciclable: [
+          'Plásticos y Botellas PET',
+          'Papel y Cartón Ondulado',
+          'Vidrio y Frascos',
+          'Metales y Latas de Aluminio'
+        ],
+        voluminoso: [
+          'Restos de Poda y Ramas (Fardos)',
+          'Escombros Limpios de Obra Menor',
+          'Muebles en Desuso y Colchones',
+          'Chatarra Metálica Domiciliaria'
+        ],
+        peligroso: [
+          'Pilas y Baterías en Desuso',
+          'Aceite Vegetal Usado (Botella cerrada)',
+          'Aparatos Electrónicos RAEE',
+          'Lámparas Fluorescentes y Químicos'
+        ]
+      };
+
+      const lista = opciones[tipo] || opciones.reciclable;
+      select.innerHTML = lista.map(o => `<option value="${escapeHTML(o)}">${escapeHTML(o)}</option>`).join('');
+    }
+
+    // Guardar Nueva Solicitud Ciudadana con todos los campos
+    function guardarRegistroResiduo(e) {
+      e.preventDefault();
+      const sesion = typeof obtenerSesionActual === 'function' ? obtenerSesionActual() : null;
+      const nombreCiudadano = sesion ? sesion.nombre : 'Facundo Pepino';
+      const dirInput = document.getElementById('reg-direccion').value.trim();
+      const direccionCiudadano = dirInput || ((sesion && sesion.direccion) ? sesion.direccion : 'San Francisco, Córdoba');
+
+      const tipo = document.querySelector('input[name="tipo_residuo"]:checked').value;
+      const subcat = document.getElementById('reg-subcategoria').value;
+      const cant = document.getElementById('reg-cantidad').value;
+      const fecha = document.getElementById('reg-fecha').value || 'Próximo turno';
+      const obs = document.getElementById('reg-observaciones').value;
+
+      const nuevaSol = {
+        id: `SOL-SF-${Math.floor(100 + Math.random() * 900)}`,
+        usuario: nombreCiudadano,
+        tipo: tipo,
+        subcategoria: subcat,
+        cantidad: cant,
+        direccion: direccionCiudadano,
+        fecha: fecha,
+        observaciones: obs,
+        coords: gpsDetectado || [-31.4290 + (Math.random() - 0.5) * 0.012, -62.0820 + (Math.random() - 0.5) * 0.015],
+        estado: 'pendiente',
+        cuadrilla: null
+      };
+
+      gpsDetectado = null;
+      const infoEl = document.getElementById('info-gps-detectado');
+      if (infoEl) infoEl.classList.add('hidden');
+      const btnTxt = document.getElementById('txt-gps-btn');
+      if (btnTxt) btnTxt.innerText = 'Usar mi GPS';
+
+      estadoApp.solicitudes.unshift(nuevaSol);
+      e.target.reset();
+      actualizarSubcategoriasFormulario('reciclable');
+      cerrarModal('modal-registro');
+      guardarEnLocalStorage();
+      renderizarTodo();
+
+      // Sincronización en Google Cloud Firestore
+      if (dbFirebase && authFirebase && authFirebase.currentUser) {
+        try {
+          dbFirebase.collection('solicitudes_residuos').add({
+            solicitudId: nuevaSol.id,
+            usuarioId: authFirebase.currentUser.uid,
+            nombreCiudadano: sesion ? sesion.nombre : 'Facundo Pepino',
+            tipoResiduo: tipo,
+            subcategoria: subcat,
+            cantidad: cant,
+            direccion: direccionCiudadano,
+            fechaSugerida: fecha,
+            observaciones: obs,
+            coords: nuevaSol.coords,
+            estado: 'pendiente',
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(docRef => {
+            console.log('[Firestore] Solicitud sincronizada con ID:', docRef.id);
+          }).catch(err => {
+            console.warn('[Firestore AVISO]:', err.message);
+          });
+        } catch (err) {
+          console.warn('[Firestore error]:', err);
+        }
+      }
+      mostrarToast('Solicitud Registrada', `Tu pedido de recolección (#${nuevaSol.id}) fue ingresado al panel municipal.`);
+    }
+
+    // Incidentes
+    function resolverIncidente(id) {
+      const inc = estadoApp.incidentes.find(i => i.id === id);
+      if (inc) {
+        inc.estado = 'resuelto';
+        if (dbFirebase && authFirebase && authFirebase.currentUser) {
+          dbFirebase.collection('incidentes').where('incidenteId', '==', id).limit(1).get()
+            .then(snap => { if (!snap.empty) return snap.docs[0].ref.update({ estado: 'resuelto' }); })
+            .catch(err => console.warn('[Firestore AVISO]:', err.message));
+        }
+        guardarEnLocalStorage();
+        renderizarTodo();
+        mostrarToast('Incidente Resuelto', `El reclamo #${id.slice(-2)} fue marcado como resuelto.`);
+      }
+    }
+
+    // Campaña Push FCM
+    function emitirCampanaMunicipal() {
+      const tit = document.getElementById('input-campana-titulo').value.trim();
+      const cue = document.getElementById('input-campana-cuerpo').value.trim();
+      if (!tit) {
+        mostrarToast('Título Requerido', 'Ingresá un título para la campaña antes de emitir.');
+        return;
+      }
+      estadoApp.campanas.unshift({
+        id: `CMP-${Date.now()}`,
+        titulo: tit,
+        desc: cue || 'Campaña general de la Municipalidad de San Francisco.',
+        fecha: 'Hoy'
+      });
+      document.getElementById('input-campana-titulo').value = '';
+      document.getElementById('input-campana-cuerpo').value = '';
+      guardarEnLocalStorage();
+      renderizarTodo();
+      if (dbFirebase && authFirebase && authFirebase.currentUser) {
+        const c = estadoApp.campanas[0];
+        dbFirebase.collection('notificaciones').add({
+          campanaId: c.id, titulo: c.titulo, desc: c.desc, fecha: c.fecha,
+          creadaEn: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(err => console.warn('[Firestore AVISO]:', err.message));
+      }
+      mostrarToast(tit, cue || 'Aviso push enviado a toda la comunidad.');
+    }
+
+    // Modales y Toasts
+    function abrirModal(id) {
+      vibrar(15);
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+    }
+
+    function abrirScannerQR() {
+      abrirModalScannerQR();
+    }
+
+    function abrirModalRegistro(tipo) {
+      if (tipo) {
+        const rad = document.querySelector(`input[name="tipo_residuo"][value="${tipo}"]`);
+        if (rad) {
+          rad.checked = true;
+          actualizarSubcategoriasFormulario(tipo);
+        }
+      }
+      document.getElementById('modal-registro').classList.remove('hidden');
+    }
+
+    function cerrarModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function abrirModalReporteIncidente() {
+      document.getElementById('modal-incidente').classList.remove('hidden');
+    }
+
+    function guardarIncidenteOperativo(e) {
+      e.preventDefault();
+      const tipo = document.getElementById('inc-tipo').value;
+      const grav = document.getElementById('inc-gravedad').value;
+      const ubi = document.getElementById('inc-ubicacion').value;
+      const desc = document.getElementById('inc-descripcion').value;
+
+      estadoApp.incidentes.unshift({
+        id: `INC-SF-${Math.floor(10 + Math.random() * 90)}`,
+        tipo: tipo,
+        ubicacion: ubi,
+        coords: [-31.4290 + (Math.random() - 0.5) * 0.012, -62.0820 + (Math.random() - 0.5) * 0.015],
+        gravedad: grav,
+        estado: 'abierto',
+        fecha: 'Ahora mismo',
+        descripcion: desc
+      });
+
+      const nuevoInc = estadoApp.incidentes[0];
+      if (dbFirebase && authFirebase && authFirebase.currentUser) {
+        dbFirebase.collection('incidentes').add({
+          incidenteId: nuevoInc.id, tipo: nuevoInc.tipo, ubicacion: nuevoInc.ubicacion, coords: nuevoInc.coords,
+          gravedad: nuevoInc.gravedad, estado: 'abierto', descripcion: nuevoInc.descripcion, fecha: nuevoInc.fecha,
+          creadoPor: authFirebase.currentUser.uid, creadaEn: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(err => console.warn('[Firestore AVISO]:', err.message));
+      }
+      e.target.reset();
+      cerrarModal('modal-incidente');
+      guardarEnLocalStorage();
+      renderizarTodo();
+      mostrarToast('Incidente Notificado a Autoridades', `Reporte operativo en ${ubi} remitido a la central.`);
+    }
+
+    let toastTimer = null;
+    function mostrarToast(titulo, mensaje) {
+      vibrar(30);
+      dispararNotificacionNativa(titulo, mensaje);
+      const toast = document.getElementById('toast-notificacion');
+      const tEl = document.getElementById('toast-titulo');
+      const mEl = document.getElementById('toast-mensaje');
+      if (tEl) tEl.innerText = titulo;
+      if (mEl) mEl.innerText = mensaje;
+
+      toast.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => cerrarToast(), 4500);
+      lucide.createIcons();
+    }
+
+    function cerrarToast() {
+      const toast = document.getElementById('toast-notificacion');
+      toast.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
+    }
+  </script>
+</body>
+</html>

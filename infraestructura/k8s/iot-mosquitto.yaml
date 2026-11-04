@@ -1,0 +1,106 @@
+# ==============================================================================
+# Despliegue de Broker MQTT (Eclipse Mosquitto) y Worker de Ingesta IoT en K8s
+# Espacio de nombres: produccion-residuos
+# Cátedra: Arquitecturas Móviles - UTN FRSFCO
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto-broker
+  namespace: produccion-residuos
+  labels:
+    app: mosquitto-broker
+    tier: iot-telemetria
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mosquitto-broker
+  template:
+    metadata:
+      labels:
+        app: mosquitto-broker
+    spec:
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2.0.18-openssl
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mqtt-tcp
+              containerPort: 1883
+            - name: mqtt-ws
+              containerPort: 9001
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: data-volume
+              mountPath: /mosquitto/data
+      volumes:
+        - name: config-volume
+          configMap:
+            name: mosquitto-config
+        - name: data-volume
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-service
+  namespace: produccion-residuos
+spec:
+  type: ClusterIP
+  selector:
+    app: mosquitto-broker
+  ports:
+    - name: mqtt-tcp
+      port: 1883
+      targetPort: 1883
+    - name: mqtt-ws
+      port: 9001
+      targetPort: 9001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-ingesta-iot
+  namespace: produccion-residuos
+  labels:
+    app: worker-ingesta-iot
+    tier: procesamiento-eventos
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker-ingesta-iot
+  template:
+    metadata:
+      labels:
+        app: worker-ingesta-iot
+    spec:
+      containers:
+        - name: ingesta-subscriptor
+          image: python:3.11-slim
+          command: ["python", "/app/worker_ingesta_mqtt.py", "--broker", "mosquitto-service"]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: BROKER_HOST
+              value: "mosquitto-service"
+

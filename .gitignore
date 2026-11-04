@@ -1,0 +1,7 @@
+node_modules/
+pruebas/img/
+__pycache__/
+*.log
+salida_revisada.*
+.firebase/
+app/firebase-config.js

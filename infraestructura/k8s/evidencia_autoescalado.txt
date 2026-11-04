@@ -1,0 +1,44 @@
+Prueba de autoescalado — 04/11/2026 10:09
+
+HPA: min 2, max 10, CPU 70 %, memoria 80 %
+
+== Estado inicial
+10:09:55  réplicas actuales/deseadas 2/2 cpu=1%  listas=2
+== Carga aplicada (6 generadores × 4 bucles) durante 240 s
+10:10:06  réplicas actuales/deseadas 2/2 cpu=1%  listas=2
+10:10:17  réplicas actuales/deseadas 2/2 cpu=1%  listas=2
+10:10:28  réplicas actuales/deseadas 2/2 cpu=73%  listas=2
+10:10:43  réplicas actuales/deseadas 2/6 cpu=491%  listas=2
+10:10:55  réplicas actuales/deseadas 6/10 cpu=470%  listas=6
+10:11:06  réplicas actuales/deseadas 6/10 cpu=470%  listas=10
+10:11:16  réplicas actuales/deseadas 10/10 cpu=433%  listas=10
+10:11:27  réplicas actuales/deseadas 10/10 cpu=209%  listas=10
+10:11:38  réplicas actuales/deseadas 10/10 cpu=145%  listas=10
+10:11:49  réplicas actuales/deseadas 10/10 cpu=145%  listas=10
+10:12:01  réplicas actuales/deseadas 10/10 cpu=147%  listas=0
+10:12:12  réplicas actuales/deseadas 10/10 cpu=146%  listas=10
+10:12:23  réplicas actuales/deseadas 10/10 cpu=138%  listas=10
+10:12:34  réplicas actuales/deseadas 10/10 cpu=138%  listas=10
+10:12:45  réplicas actuales/deseadas 10/10 cpu=146%  listas=10
+10:12:55  réplicas actuales/deseadas 10/10 cpu=144%  listas=10
+10:13:06  réplicas actuales/deseadas 10/10 cpu=144%  listas=10
+10:13:17  réplicas actuales/deseadas 10/10 cpu=143%  listas=10
+10:13:28  réplicas actuales/deseadas 10/10 cpu=147%  listas=10
+10:13:39  réplicas actuales/deseadas 10/10 cpu=145%  listas=10
+10:13:50  réplicas actuales/deseadas 10/10 cpu=145%  listas=10
+10:14:01  réplicas actuales/deseadas 10/10 cpu=138%  listas=10
+== Carga retirada (el HPA espera 300 s antes de reducir réplicas)
+10:14:13  réplicas actuales/deseadas 10/10 cpu=132%  listas=10
+10:14:24  réplicas actuales/deseadas 10/10 cpu=132%  listas=10
+10:14:35  réplicas actuales/deseadas 10/10 cpu=132%  listas=10
+10:14:45  réplicas actuales/deseadas 10/10 cpu=137%  listas=10
+10:14:56  réplicas actuales/deseadas 10/10 cpu=98%  listas=10
+10:15:07  réplicas actuales/deseadas 10/10 cpu=98%  listas=10
+
+Type     Reason                        Age                   From                       Message
+  ----     ------                        ----                  ----                       -------
+  Warning  FailedGetResourceMetric       6m3s (x2 over 6m18s)  horizontal-pod-autoscaler  failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Warning  FailedGetResourceMetric       6m3s (x2 over 6m18s)  horizontal-pod-autoscaler  failed to get memory utilization: unable to get metrics for resource memory: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Warning  FailedComputeMetricsReplicas  6m3s (x2 over 6m18s)  horizontal-pod-autoscaler  invalid metrics (2 invalid out of 2), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Normal   SuccessfulRescale             4m33s                 horizontal-pod-autoscaler  New size: 6; reason: cpu resource utilization (percentage of request) above target
+  Normal   SuccessfulRescale             4m17s                 horizontal-pod-autoscaler  New size: 10; reason: cpu resource utilization (percentage of request) above target

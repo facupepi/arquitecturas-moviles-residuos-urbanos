@@ -1,0 +1,20 @@
+{
+  "name": "san-francisco-residuos-app",
+  "version": "1.0.0",
+  "description": "Prototipo Web Mobile App Gestión de Residuos Vecinales - San Francisco (UTN FRSFCO)",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -l 3000",
+    "dev": "npx serve . -l 3000",
+    "estilos": "npx --yes tailwindcss@3.4.17 -c ../herramientas/tailwind.config.js -i ../herramientas/entrada.css -o estilos.css --minify"
+  },
+  "keywords": [
+    "residuos",
+    "san-francisco",
+    "utn-frsfco",
+    "pwa",
+    "mobile"
+  ],
+  "author": "Facundo Pepino & Mauricio Truchet",
+  "license": "ISC"
+}

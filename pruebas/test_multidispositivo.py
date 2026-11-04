@@ -79,7 +79,7 @@ try:
         chk("La cuadrilla no ve paradas de otra unidad", id2 not in C.inner_text("#lista-paradas-recolector"))
 
         # 4. La cuadrilla confirma la recolección y todos lo ven
-        C.evaluate("mostrarPantalla('confirmar')"); C.fill("#input-qr-manual", id1); C.evaluate(f"validarIdentificadorQR('{id1}')")
+        C.evaluate("abrirModalConfirmar()"); C.fill("#input-qr-manual", id1); C.evaluate(f"validarIdentificadorQR('{id1}')")
         C.fill("#input-pesaje-recolector", "18"); C.evaluate("void confirmarRecoleccionEnTerritorio()")
         chk("Autoridad ve la solicitud recolectada", espera(A, f"estadoApp.solicitudes.find(x => x.id === '{id1}').estado === 'recolectado'"))
         chk("Vecino ve su solicitud recolectada", espera(V, f"estadoApp.solicitudes.find(x => x.id === '{id1}').estado === 'recolectado'"))

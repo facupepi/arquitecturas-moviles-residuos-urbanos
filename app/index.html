@@ -77,10 +77,11 @@
     .anclaje { scroll-margin-top: 88px; }
     #slot-mapa-ciudadano > #seccion-mapa-vecino, #slot-mapa-autoridad > #seccion-mapa-vecino, #slot-mapa-recolector > #seccion-mapa-vecino { height: 100%; }
     @media (min-width: 1024px) {
-      body.autenticado #menu-lateral { display: flex; }
-      body.autenticado main, body.autenticado footer { margin-left: 248px; width: calc(100% - 248px); }
+      body.autenticado:not(.sin-menu) #menu-lateral { display: flex; }
+      body.autenticado:not(.sin-menu) main, body.autenticado:not(.sin-menu) footer { margin-left: 248px; width: calc(100% - 248px); }
       body.autenticado main { max-width: none; }
     }
+    body.sin-menu #bottom-nav-bar { display: none; }
     .nav-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 12px;
       font-size: 14px; font-weight: 600; color: #526174; text-align: left; transition: background .15s, color .15s; }
     .nav-item:hover { background: #f4f7fa; color: #1e2939; }
@@ -102,7 +103,7 @@
     <div class="max-w-md w-full mx-auto my-auto">
       <div class="mb-5">
         <p class="text-[13px] font-bold tracking-[0.08em] uppercase text-emerald-700">Ciudad limpia y sostenible</p>
-        <h1 class="text-[28px] leading-[34px] font-bold text-slate-800 mt-1">Residuos San Francisco</h1>
+        <h1 class="text-2xl font-bold text-slate-800 mt-1">Residuos San Francisco</h1>
         <p class="text-base text-slate-600 mt-2">Pedí el retiro de residuos especiales, encontrá los ecopuntos y seguí tus solicitudes.</p>
       </div>
 
@@ -176,15 +177,11 @@
       <div class="flex items-center gap-2">
         <div id="badge-online-status" class="hidden"></div>
         <div id="header-sesion" class="items-center gap-2" style="display:none">
-          <button id="btn-instalar-pwa" onclick="instalarPWA()" class="hidden text-sm bg-white text-sky-800 font-bold px-3 py-1.5 rounded-full items-center gap-1.5 transition hover:bg-sky-100" title="Instalar la app">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Instalar</span>
-          </button>
           <button id="btn-toggle-notificaciones" onclick="solicitarPermisoNotificaciones()" class="relative w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/15 transition" aria-label="Activar avisos en el dispositivo" title="Activar avisos en el dispositivo">
             <i data-lucide="bell" class="w-5 h-5"></i>
             <span id="punto-avisos" class="hidden absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-sky-700"></span>
           </button>
-          <div id="badge-rol-header" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 text-sm">
+          <div id="badge-rol-header" class="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 text-sm">
             <span id="badge-rol-icono"><i data-lucide="user" class="w-4 h-4"></i></span>
             <span id="badge-rol-texto" class="font-bold text-white">Portal Vecino</span>
           </div>
@@ -206,7 +203,7 @@
   </header>
 
   <!-- Menú lateral (escritorio): se completa según el rol -->
-  <aside id="menu-lateral" class="fixed left-0 top-[72px] bottom-0 w-[248px] bg-white border-r border-slate-200 flex-col p-3 overflow-y-auto z-30" aria-label="Secciones">
+  <aside id="menu-lateral" style="top: var(--menu-top, 72px)" class="fixed left-0 bottom-0 w-[248px] bg-white border-r border-slate-200 flex-col p-3 overflow-y-auto z-30" aria-label="Secciones">
     <nav id="menu-lateral-items" class="flex flex-col gap-1"></nav>
   </aside>
 
@@ -217,14 +214,14 @@
   </div>
 
   <!-- Banner Instalación PWA (Móvil) -->
-  <div id="banner-instalar-pwa" class="hidden bg-sky-800 text-white px-4 py-2 text-xs flex items-center justify-between shadow-md sticky top-[60px] z-40">
+  <div id="banner-instalar-pwa" class="hidden bg-sky-800 text-white px-4 py-2 text-xs flex items-center justify-between shadow-md sticky z-40" style="top: var(--alto-header, 60px)">
     <div class="flex items-center space-x-2">
       <div class="w-6 h-6 rounded bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-300">
         <i data-lucide="download" class="w-3.5 h-3.5"></i>
       </div>
       <div>
-        <span class="font-bold">Instalar San Francisco Residuos</span>
-        <span class="text-[13px] text-emerald-200 block sm:inline sm:ml-1">— Agregá la Web App a tu pantalla de inicio</span>
+        <span class="font-bold">Instalar la app</span>
+        <span class="text-[13px] text-emerald-200 hidden sm:inline sm:ml-1">en tu pantalla de inicio</span>
       </div>
     </div>
     <div class="flex items-center space-x-2">
@@ -259,7 +256,7 @@
       <div id="seccion-inicio-vecino" data-pantalla="inicio" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
           <p class="antetitulo text-emerald-700">Ciudad limpia y sostenible</p>
-          <h2 class="text-[28px] leading-[34px] font-bold text-slate-800 mt-1">Hola, <span id="saludo-nombre">vecino</span></h2>
+          <h2 class="text-2xl font-bold text-slate-800 mt-1">Hola, <span id="saludo-nombre">vecino</span></h2>
           <p class="text-base text-slate-600 mt-1">¿Qué querés hacer hoy?</p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
             <button onclick="abrirModalRegistro('reciclable')" class="flex items-center gap-3 p-3 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 transition text-left min-h-[56px]">
@@ -280,7 +277,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
           <div>
             <p class="antetitulo text-slate-600">Tu aporte</p>
-            <div class="text-[32px] leading-[38px] font-bold text-emerald-700 mt-1" id="stat-ciudadano-kilos">34.5 kg</div>
+            <div class="text-3xl font-bold text-emerald-700 mt-1" id="stat-ciudadano-kilos">34.5 kg</div>
             <p class="text-sm text-slate-600">de reciclables entregados</p>
           </div>
           <p class="text-sm text-slate-600 mt-3 pt-3 border-t border-slate-200">Retiros completados: <span class="font-bold text-slate-800" id="stat-ciudadano-retiros">2 cerrados</span></p>
@@ -293,7 +290,7 @@
           <!-- Mapa Territorial de Ecopuntos, Incidentes y Rutas en San Francisco -->
           <div id="seccion-mapa-vecino" class="w-full bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+              <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
                 <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
                 <span id="mapa-titulo-rol">Ecopuntos en San Francisco</span>
               </h3>
@@ -324,9 +321,9 @@
 
         <!-- Lista de Solicitudes y Avisos Municipales -->
           <!-- Mis Solicitudes -->
-          <div id="card-solicitudes-vecino" data-pantalla="solicitudes" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col">
+          <div id="card-solicitudes-vecino" data-pantalla="inicio" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
+              <h3 class="font-bold text-base text-slate-800 flex items-center space-x-1.5">
                 <i data-lucide="clipboard-list" class="w-4 h-4 text-emerald-600"></i>
                 <span>Solicitudes Registradas</span>
               </h3>
@@ -339,7 +336,7 @@
 
           <!-- Campañas y Notificaciones de Reciclaje -->
           <div id="card-campanas-vecino" data-pantalla="avisos" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5 mb-2">
+            <h3 class="font-bold text-base text-slate-800 flex items-center space-x-1.5 mb-2">
               <i data-lucide="megaphone" class="w-4 h-4 text-amber-500"></i>
               <span>Campañas y Alertas de Limpieza</span>
             </h3>
@@ -351,7 +348,7 @@
       <!-- Estado de los contenedores (solo lectura para el vecino) -->
       <div id="card-disponibilidad-vecino" data-pantalla="contenedores" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
+          <h3 class="font-bold text-base text-slate-800 flex items-center space-x-1.5">
             <i data-lucide="recycle" class="w-4 h-4 text-emerald-600"></i>
             <span>Contenedores cercanos</span>
           </h3>
@@ -361,9 +358,9 @@
       </div>
 
       <!-- Horarios de recolección domiciliaria por zona -->
-      <div id="card-horarios-vecino" data-pantalla="horarios" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <div id="card-horarios-vecino" data-pantalla="contenedores" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-1.5">
+          <h3 class="font-bold text-base text-slate-800 flex items-center space-x-1.5">
             <i data-lucide="calendar-clock" class="w-4 h-4 text-emerald-600"></i>
             <span>Horarios de recolección</span>
           </h3>
@@ -397,7 +394,7 @@
             <span>Solicitudes Pendientes</span>
             <span class="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="clock" class="w-4 h-4"></i></span>
           </div>
-          <div class="text-2xl font-black text-slate-800 mt-2" id="kpi-pendientes">4</div>
+          <div class="text-xl font-black text-slate-800 mt-2" id="kpi-pendientes">4</div>
           <div class="text-[12px] text-amber-600 font-medium mt-1" id="kpi-pendientes-sub">Esperando asignación</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -405,7 +402,7 @@
             <span>Cuadrillas en Calle</span>
             <span class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="truck" class="w-4 h-4"></i></span>
           </div>
-          <div class="text-2xl font-black text-slate-800 mt-2" id="kpi-cuadrillas">3</div>
+          <div class="text-xl font-black text-slate-800 mt-2" id="kpi-cuadrillas">3</div>
           <div class="text-[12px] text-blue-600 font-medium mt-1">Rutas activas en San Francisco</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -413,7 +410,7 @@
             <span>Incidentes Abiertos</span>
             <span class="p-1.5 bg-rose-50 text-rose-600 rounded-lg"><i data-lucide="alert-octagon" class="w-4 h-4"></i></span>
           </div>
-          <div class="text-2xl font-black text-slate-800 mt-2" id="kpi-incidentes">2</div>
+          <div class="text-xl font-black text-slate-800 mt-2" id="kpi-incidentes">2</div>
           <div class="text-[12px] text-rose-600 font-medium mt-1" id="kpi-incidentes-sub">En vía pública</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -421,7 +418,7 @@
             <span>Puntos Limpios Activos</span>
             <span class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
           </div>
-          <div class="text-2xl font-black text-emerald-700 mt-2" id="kpi-ecopuntos-activos">5 Operativos</div>
+          <div class="text-xl font-black text-emerald-700 mt-2" id="kpi-ecopuntos-activos">5 Operativos</div>
           <div class="text-[12px] text-emerald-600 font-medium mt-1">100% de la red monitoreada</div>
         </div>
       </div>
@@ -431,7 +428,7 @@
         <!-- Panel de Asignación y Optimización Inteligente de Rutas -->
         <div id="planificador-rutas-card" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+            <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
               <i data-lucide="route" class="w-4 h-4 text-muni-600"></i>
               <span>Planificar rutas</span>
             </h3>
@@ -464,9 +461,9 @@
       </div>
 
       <!-- Consola de Monitoreo de Incidentes Urbanos -->
-      <div id="tabla-incidentes-card" data-pantalla="incidentes" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
+      <div id="tabla-incidentes-card" data-pantalla="resumen" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+            <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
               <i data-lucide="layout-dashboard" class="w-4 h-4 text-muni-600"></i>
               <span>Incidentes</span>
             </h3>
@@ -498,7 +495,7 @@
         <!-- Difusión de campañas -->
           <div id="card-campanas-muni" data-pantalla="campanas" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+              <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
                 <i data-lucide="megaphone" class="w-4 h-4 text-muni-600"></i>
                 <span>Enviar un aviso a la comunidad</span>
               </h3>
@@ -525,7 +522,7 @@
                 En vivo
               </span>
             </div>
-            <h3 class="font-bold text-lg text-slate-800 mt-1 flex items-center space-x-2">
+            <h3 class="font-bold text-base text-slate-800 mt-1 flex items-center space-x-2">
               <i data-lucide="radio" class="w-4 h-4 text-sky-600"></i>
               <span>Contenedores</span>
             </h3>
@@ -614,32 +611,32 @@
     <!-- ========================================================== -->
     <div id="vista-recolector" class="space-y-5 hidden">
       <!-- Resumen operativo del turno -->
-      <div id="kpis-cuadrilla" data-pantalla="resumen" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div id="kpis-cuadrilla" data-pantalla="ruta" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <span class="text-xs text-slate-500">Paradas Pendientes</span>
-          <p id="kpi-cuad-paradas" class="text-2xl font-black text-slate-800 mt-1">0</p>
+          <p id="kpi-cuad-paradas" class="text-xl font-black text-slate-800 mt-1">0</p>
           <span class="text-[13px] text-orange-600">en la hoja de ruta de hoy</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <span class="text-xs text-slate-500">Contenedores Urgentes</span>
-          <p id="kpi-cuad-urgentes" class="text-2xl font-black text-rose-600 mt-1">0</p>
+          <p id="kpi-cuad-urgentes" class="text-xl font-black text-rose-600 mt-1">0</p>
           <span class="text-[13px] text-rose-600">con llenado de 80% o más</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <span class="text-xs text-slate-500">Retiros a Domicilio</span>
-          <p id="kpi-cuad-retiros" class="text-2xl font-black text-slate-800 mt-1">0</p>
+          <p id="kpi-cuad-retiros" class="text-xl font-black text-slate-800 mt-1">0</p>
           <span class="text-[13px] text-slate-500">asignados a tu móvil</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <span class="text-xs text-slate-500">Kilos Recolectados</span>
-          <p id="kpi-cuad-kilos" class="text-2xl font-black text-emerald-700 mt-1">0 kg</p>
+          <p id="kpi-cuad-kilos" class="text-xl font-black text-emerald-700 mt-1">0 kg</p>
           <span class="text-[13px] text-emerald-700">registrados en el turno</span>
         </div>
       </div>
-      <div data-pantalla="resumen" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div data-pantalla="ruta" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p class="antetitulo text-orange-700">Móvil 03, cuadrilla especial</p>
-          <h2 class="text-[22px] leading-[30px] font-bold text-slate-800 mt-0.5">Hoja de ruta de hoy</h2>
+          <h2 class="text-xl font-bold text-slate-800 mt-0.5">Hoja de ruta de hoy</h2>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <button id="btn-abrir-scanner-qr" onclick="abrirModalScannerQR()" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-[15px] transition">
@@ -654,14 +651,14 @@
       </div>
 
       <!-- Rutas Asignadas y Detalle de Paradas con Mapa Territorial -->
-      <div data-pantalla="ruta" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div id="seccion-paradas-cuadrilla" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+      <div data-pantalla="ruta" class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        <div id="seccion-paradas-cuadrilla" class="lg:col-span-2 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2 whitespace-nowrap">
               <i data-lucide="list-ordered" class="w-4 h-4 text-orange-600"></i>
               <span>Paradas de hoy</span>
             </h3>
-            <span class="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-0.5 rounded-full" id="conteo-paradas-recolector">4 restantes</span>
+            <span class="text-xs bg-orange-100 text-orange-800 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" id="conteo-paradas-recolector">4 restantes</span>
           </div>
           <div class="space-y-2.5 overflow-y-auto max-h-[380px] custom-scroll pr-1" id="lista-paradas-recolector">
             <!-- Renderizado dinámico -->
@@ -669,56 +666,7 @@
         </div>
 
         <!-- Slot para el Mapa Territorial en Módulo de Cuadrilla -->
-        <div id="slot-mapa-recolector" class="lg:col-span-2"></div>
-      </div>
-
-      <!-- Módulo de Confirmación Operativa y Escáner Rápido -->
-      <div id="card-confirmacion-cuadrilla" data-pantalla="confirmar" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-              <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
-                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
-                <span>Confirmar parada</span>
-              </h3>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <h4 class="text-sm font-bold text-slate-700">1. ¿Qué parada cerrás?</h4>
-                <div class="flex gap-2">
-                  <input id="input-qr-manual" type="text" placeholder="Código de la parada" aria-label="Código de la parada" class="flex-1 min-w-0 text-sm border border-slate-300 rounded-lg p-2 uppercase bg-white">
-                  <button onclick="validarIdentificadorQR(document.getElementById('input-qr-manual').value)" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm font-semibold">
-                    Buscar
-                  </button>
-                </div>
-                <p class="text-[13px] text-slate-500">Elegí una parada en "Mi ruta", escaneá su código o escribilo.</p>              </div>
-
-              <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <h4 class="text-sm font-bold text-slate-700">2. Peso y observaciones</h4>
-                <div class="flex gap-2 items-center">
-                  <input id="input-pesaje-recolector" type="number" min="0" step="0.5" placeholder="Peso en kg" aria-label="Peso en kilos" class="w-32 text-sm border border-slate-300 rounded-lg p-2 bg-white">
-                </div>
-                <textarea id="input-notas-recolector" rows="2" placeholder="Observaciones del retiro (opcional)" aria-label="Observaciones" class="w-full text-sm border border-slate-300 rounded-lg p-2 bg-white"></textarea>
-              </div>
-            </div>
-
-            <!-- Resumen del Punto Validado -->
-            <div id="box-punto-validado" class="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl hidden">
-              <div class="flex items-center space-x-2">
-                <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                <span class="text-sm font-bold text-emerald-900" id="txt-punto-validado-nombre">Parada encontrada</span>
-              </div>
-              <p class="text-[13px] text-emerald-700 mt-1" id="txt-punto-validado-detalle"></p>
-            </div>
-          </div>
-
-          <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end space-x-2">
-            <button onclick="confirmarRecoleccionEnTerritorio()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl text-xs flex items-center space-x-2 shadow transition">
-              <i data-lucide="check-check" class="w-4 h-4"></i>
-              <span>Confirmar recolección</span>
-            </button>
-          </div>
-        </div>
+        <div id="slot-mapa-recolector" class="lg:col-span-3"></div>
       </div>
     </div>
 
@@ -727,6 +675,55 @@
   <!-- ========================================================== -->
   <!-- MODALES INTERACTIVOS                                      -->
   <!-- ========================================================== -->
+
+  <!-- Modal: Confirmar parada (cuadrilla) -->
+  <div id="modal-confirmar-parada" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto custom-scroll">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
+          <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>
+          <span>Confirmar parada</span>
+        </h3>
+        <button onclick="cerrarModal('modal-confirmar-parada')" class="text-slate-400 hover:text-slate-600 text-xl leading-none" aria-label="Cerrar">×</button>
+      </div>
+
+      <div id="box-punto-validado" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl hidden">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
+          <span class="text-sm font-bold text-emerald-900" id="txt-punto-validado-nombre">Parada encontrada</span>
+        </div>
+        <p class="text-[13px] text-emerald-700 mt-1" id="txt-punto-validado-detalle"></p>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div>
+          <label for="input-qr-manual" class="font-bold text-slate-700 block mb-1">Código de la parada</label>
+          <div class="flex gap-2">
+            <input id="input-qr-manual" type="text" placeholder="Escribilo o escanealo" class="flex-1 min-w-0 border border-slate-300 rounded-lg p-2 uppercase bg-white">
+            <button onclick="validarIdentificadorQR(document.getElementById('input-qr-manual').value)" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg font-semibold">Buscar</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label for="input-pesaje-recolector" class="font-bold text-slate-700 block mb-1">Peso (kg)</label>
+            <input id="input-pesaje-recolector" type="number" min="0" step="0.5" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+          </div>
+          <div class="col-span-2">
+            <label for="input-notas-recolector" class="font-bold text-slate-700 block mb-1">Observaciones</label>
+            <input id="input-notas-recolector" type="text" placeholder="Opcional" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-1 flex justify-end gap-2">
+        <button onclick="cerrarModal('modal-confirmar-parada')" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl hover:bg-slate-50 text-sm">Cancelar</button>
+        <button onclick="confirmarRecoleccionEnTerritorio()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center space-x-2 shadow transition">
+          <i data-lucide="check-check" class="w-4 h-4"></i>
+          <span>Confirmar</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal: Registro de Residuos Ciudadanos -->
   <div id="modal-registro" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
@@ -811,7 +808,7 @@
   <div id="modal-scanner" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
     <div class="bg-white rounded-2xl max-w-sm w-full p-4 shadow-2xl space-y-3">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+        <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
           <i data-lucide="camera" class="w-4 h-4 text-orange-600"></i>
           <span>Escanear código</span>
         </h3>
@@ -838,7 +835,7 @@
   <div id="modal-incidente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="font-bold text-lg text-slate-800 flex items-center space-x-2">
+        <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2">
           <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
           <span>Reporte de Incidente en el Servicio</span>
         </h3>
@@ -1213,6 +1210,25 @@
       if (!token || !dbFirebase) return;
       try { await dbFirebase.collection('dispositivos').doc(token).delete(); } catch (e) {}
     }
+
+    // El menú lateral y los avisos se acomodan debajo del encabezado y de los avisos visibles, midiendo su alto real
+    function acomodarMenuLateral() {
+      const alto = id => { const e = document.getElementById(id); return e && e.offsetParent !== null ? e.getBoundingClientRect().height : 0; };
+      const header = document.querySelector('header');
+      const altoHeader = header ? header.getBoundingClientRect().height : 72;
+      const raiz = document.documentElement.style;
+      raiz.setProperty('--alto-header', altoHeader + 'px');
+      raiz.setProperty('--menu-top', (altoHeader + alto('banner-instalar-pwa') + alto('banner-offline')) + 'px');
+    }
+    window.addEventListener('resize', acomodarMenuLateral);
+    window.addEventListener('DOMContentLoaded', () => {
+      acomodarMenuLateral();
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(acomodarMenuLateral);
+        ['banner-instalar-pwa', 'banner-offline'].forEach(id => { const e = document.getElementById(id); if (e) ro.observe(e); });
+        const h = document.querySelector('header'); if (h) ro.observe(h);
+      }
+    });
 
     // Instalación PWA
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -1668,23 +1684,18 @@
     const MENU_POR_ROL = {
       ciudadano: [
         { p: 'inicio', t: 'Inicio', i: 'home', barra: true },
-        { p: 'solicitudes', t: 'Mis solicitudes', c: 'Solicitudes', i: 'clipboard-list', barra: true },
         { p: 'mapa', t: 'Mapa', i: 'map-pin', barra: true },
-        { p: 'avisos', t: 'Avisos', i: 'bell', barra: true },
-        { p: 'contenedores', t: 'Contenedores', i: 'recycle', barra: true },
-        { p: 'horarios', t: 'Horarios', i: 'calendar-clock' }
+        { p: 'contenedores', t: 'Contenedores y horarios', c: 'Contenedores', i: 'recycle', barra: true },
+        { p: 'avisos', t: 'Avisos', i: 'bell', barra: true }
       ],
       autoridad: [
-        { p: 'resumen', t: 'Resumen', i: 'layout-dashboard', barra: true },
+        { p: 'resumen', t: 'Resumen e incidentes', c: 'Resumen', i: 'layout-dashboard', barra: true },
         { p: 'rutas', t: 'Rutas y mapa', c: 'Rutas', i: 'route', barra: true },
-        { p: 'incidentes', t: 'Incidentes', i: 'alert-octagon', barra: true },
-        { p: 'campanas', t: 'Avisos a vecinos', c: 'Avisos', i: 'megaphone', barra: true },
-        { p: 'contenedores', t: 'Contenedores', i: 'recycle', barra: true }
+        { p: 'contenedores', t: 'Contenedores', i: 'recycle', barra: true },
+        { p: 'campanas', t: 'Avisos a vecinos', c: 'Avisos', i: 'megaphone', barra: true }
       ],
       recolector: [
-        { p: 'resumen', t: 'Resumen', i: 'layout-dashboard', barra: true },
-        { p: 'ruta', t: 'Mi ruta y mapa', c: 'Mi ruta', i: 'route', barra: true },
-        { p: 'confirmar', t: 'Confirmar parada', c: 'Confirmar', i: 'check-circle', barra: true }
+        { p: 'ruta', t: 'Mi ruta', i: 'route', barra: true }
       ]
     };
     let rolNavegacion = null;
@@ -1729,6 +1740,7 @@
           `<button type="button" class="nav-tab" data-nav-destino="${it.p}" onclick="irAPantalla('${it.p}')"><span class="pill"><i data-lucide="${it.i}" class="w-[22px] h-[22px]"></i></span><span>${it.c || it.t}</span></button>`).join('');
       }
       lucide.createIcons();
+      document.body.classList.toggle('sin-menu', items.length < 2);
       let guardada = null;
       try { guardada = sessionStorage.getItem('SF_PANTALLA_' + rol); } catch (e) {}
       mostrarPantalla(guardada || (items[0] && items[0].p), { arriba: false });
@@ -2470,7 +2482,7 @@
       const tsp = resolverTSP(base, [...paradasEcopuntos, ...paradasSolicitudes]);
       const porId = Object.fromEntries([...paradasEcopuntos, ...paradasSolicitudes].map(x => [x.id, x]));
       const paradas = tsp.ruta.slice(1, -1).map(x => porId[x.id]).filter(Boolean);
-      conteo.innerText = `${paradas.length} paradas${paradas.length ? `, ${tsp.distanciaKm} km` : ''}`;
+      conteo.innerText = `${paradas.length} ${paradas.length === 1 ? 'parada' : 'paradas'}${paradas.length ? `, ${tsp.distanciaKm} km` : ''}`;
 
       // Trazado de la ruta en el mapa de la cuadrilla
       const sesion = obtenerSesionActual();
@@ -2482,7 +2494,7 @@
           if (capaRutaCuadrilla !== rectaCuadrilla || !mapaInstance) return;
           mapaInstance.removeLayer(rectaCuadrilla);
           capaRutaCuadrilla = L.polyline(r.puntos, { color: '#ea580c', weight: 5, opacity: 0.9 }).addTo(mapaInstance);
-          conteo.innerText = `${paradas.length} paradas, ${r.km} km por calles`;
+          conteo.innerText = `${paradas.length} ${paradas.length === 1 ? 'parada' : 'paradas'}, ${r.km} km`;
         }).catch(() => {});
         const firma = paradas.map(x => x.id).join('|');
         if (firma !== firmaRutaCuadrilla) {
@@ -2496,13 +2508,13 @@
           <div>
             <div class="flex items-center space-x-1.5">
               <span class="w-5 h-5 rounded-full bg-orange-600 text-white font-bold flex items-center justify-center text-[12px]">${idx + 1}</span>
-              <span class="font-bold text-slate-800">${escapeHTML(p.nombre)}</span>
+              <span class="font-bold text-slate-800 text-[13px] leading-tight">${escapeHTML(p.nombre)}</span>
               ${p.capacidad >= 80 ? '<span class="text-[12px] font-bold bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded animate-pulse">URGENTE</span>' : ''}
             </div>
-            <p class="text-slate-600 text-[13px] mt-1">${escapeHTML(p.tipo)}. ${escapeHTML(p.dir)}</p>
-            <p class="text-slate-500 text-[12px] mt-0.5">Código ${p.id}</p>
+            <p class="text-slate-600 text-[12px] leading-snug mt-1">${escapeHTML(p.tipo)}. ${escapeHTML(p.dir)}</p>
+            <p class="text-slate-400 text-[11px] mt-0.5">Código ${p.id}</p>
           </div>
-          <button onclick="document.getElementById('input-qr-manual').value='${p.id}'; validarIdentificadorQR('${p.id}'); mostrarPantalla('confirmar')" class="shrink-0 text-orange-800 hover:text-orange-900 bg-orange-100 hover:bg-orange-200 font-bold px-3 py-1.5 rounded-lg text-[13px]">
+          <button onclick="document.getElementById('input-qr-manual').value='${p.id}'; validarIdentificadorQR('${p.id}')" class="shrink-0 text-orange-800 hover:text-orange-900 bg-orange-100 hover:bg-orange-200 font-bold px-2.5 py-1 rounded-lg text-xs">
             Confirmar
           </button>
         </div>
@@ -2818,6 +2830,10 @@
       }
     }
 
+    function abrirModalConfirmar() {
+      document.getElementById('modal-confirmar-parada').classList.remove('hidden');
+    }
+
     function procesarLecturaQR(codigo) {
       cerrarModalScanner();
       document.getElementById('input-qr-manual').value = codigo;
@@ -2826,6 +2842,7 @@
 
     // Validación estricta con feedback diferenciado y tolerancia a URIs/URLs
     function validarIdentificadorQR(codigo) {
+      abrirModalConfirmar();
       if (!codigo || !codigo.trim()) {
         mostrarToast('Falta el código', 'Escribí o escaneá el código de la parada.');
         return;
@@ -2966,6 +2983,7 @@
       document.getElementById('input-qr-manual').value = '';
       document.getElementById('input-pesaje-recolector').value = '';
       document.getElementById('input-notas-recolector').value = '';
+      cerrarModal('modal-confirmar-parada');
 
       guardarEnLocalStorage();
       renderizarTodo();

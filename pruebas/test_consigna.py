@@ -53,7 +53,7 @@ try:
         ir = lambda x: (pg.evaluate("mostrarPantalla('%s')" % x), pg.wait_for_timeout(300))
         visible = lambda i: pg.evaluate("(i)=>{const e=document.getElementById(i);return !!e && e.offsetParent!==null}", i)
         chk("Ciudadano: no ve controles de sensores ni panel municipal", not visible("panel-iot-card") and not visible("btn-forzar-desborde-ui") and not visible("seccion-kpis-muni"))
-        ir("horarios")
+        ir("contenedores")
         chk("Ciudadano: ve los horarios de recolección por zona", visible("tabla-cronograma-vecino") and pg.locator("#tabla-cronograma-vecino tr").count() >= 3)
         r = pg.evaluate("""()=>{const base={id:'B',coords:COORDS_SF};let ok=true,mejoras=0;
             for(let k=0;k<40;k++){const ds=Array.from({length:8},(_,i)=>({id:'P'+i,coords:[-31.4290+(Math.random()-.5)*.03,-62.0820+(Math.random()-.5)*.04]}));
@@ -132,7 +132,7 @@ try:
         pg.fill("#input-campana-titulo", "E2E-PRUEBA Jornada de limpieza"); pg.fill("#input-campana-cuerpo", "Sábado en Plaza Cívica")
         pg.evaluate("emitirCampanaMunicipal()"); pg.wait_for_timeout(600)
         chk("Autoridad: emite campaña", pg.evaluate("estadoApp.campanas[0].titulo") == "E2E-PRUEBA Jornada de limpieza")
-        ir("incidentes")
+        ir("resumen")
         chk("Autoridad: tabla de incidentes", pg.locator("#tabla-incidentes-body tr").count() >= 1)
         # Telemetría llegó a la nube
         time.sleep(2)
@@ -147,12 +147,12 @@ try:
         ir("ruta")
         chk("Cuadrilla: lista de paradas asignadas", pg.locator("#lista-paradas-recolector > *").count() >= 1)
         chk("Cuadrilla: ve la solicitud despachada", id_sol in pg.inner_text("#lista-paradas-recolector"))
-        pg.evaluate("mostrarPantalla('confirmar')"); pg.fill("#input-qr-manual", "ECO-SF-001")
+        pg.evaluate("abrirModalConfirmar()"); pg.fill("#input-qr-manual", "ECO-SF-001")
         pg.evaluate("validarIdentificadorQR('ECO-SF-001')")
         chk("Cuadrilla: validación de identificador", "Plaza Cívica" in pg.inner_text("#txt-punto-validado-nombre"))
         pg.evaluate("validarIdentificadorQR('XXX-999')")
         chk("Cuadrilla: rechaza identificador inválido", "No encontramos" in pg.inner_text("#txt-punto-validado-nombre"))
-        pg.evaluate("mostrarPantalla('confirmar')"); pg.fill("#input-qr-manual", "ECO-SF-001"); pg.evaluate("validarIdentificadorQR('ECO-SF-001')")
+        pg.evaluate("abrirModalConfirmar()"); pg.fill("#input-qr-manual", "ECO-SF-001"); pg.evaluate("validarIdentificadorQR('ECO-SF-001')")
         pg.fill("#input-pesaje-recolector", "14.5")
         pg.evaluate("void confirmarRecoleccionEnTerritorio()"); pg.wait_for_timeout(800)
         chk("Cuadrilla: confirma recolección (vacía contenedor)", pg.evaluate("estadoApp.ecopuntos.find(e=>e.id==='ECO-SF-001').capacidad") <= 25)

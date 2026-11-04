@@ -1,0 +1,12 @@
+# Configuración para la prueba local con docker compose
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  - "alertas_residuos.yml"
+
+scrape_configs:
+  - job_name: 'gestion-residuos-pods'
+    static_configs:
+      - targets: ['app:9113']

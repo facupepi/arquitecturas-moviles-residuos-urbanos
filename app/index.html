@@ -1826,6 +1826,7 @@
             </div>
             <h4 class="font-bold text-slate-800 text-sm mt-1">${escapeHTML(p.nombre)}</h4>
             <p class="text-slate-500 text-xs mt-0.5">${escapeHTML(p.tipo)} • ${escapeHTML(p.direccion)}</p>
+            <p class="text-slate-700 text-xs font-semibold mt-0.5">Atención: ${escapeHTML(p.horario || 'Consultar')}${p.materiales ? ' · Recibe ' + escapeHTML(p.materiales.join(', ').toLowerCase()) : ''}</p>
             <div class="mt-2 space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
               <div class="flex justify-between items-center">
                 <span class="text-xs text-slate-600 font-medium">Nivel de Llenado:</span> 
@@ -1975,6 +1976,7 @@
               <span class="inline-block px-2 py-0.5 rounded-full font-bold text-[12px] ${estilo}">${etiqueta}</span>
               <h5 class="font-bold text-slate-800 text-[15px] leading-tight mt-1.5">${escapeHTML(e.nombre)}</h5>
               <p class="text-[12px] text-slate-500 mt-0.5 truncate">${escapeHTML(e.direccion || '')}</p>
+              <p class="text-[12px] text-slate-600 font-semibold mt-0.5">Atención: ${escapeHTML(e.horario || 'Consultar')}</p>
               <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-2">
                 <div class="${barra} h-full" style="width: ${e.capacidad}%"></div>
               </div>

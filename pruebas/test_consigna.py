@@ -61,6 +61,7 @@ try:
         chk("Ciudadano: ve disponibilidad de contenedores", visible("lista-disponibilidad-vecino") and pg.locator("#lista-disponibilidad-vecino > div").count() >= 5)
         chk("Ciudadano: mapa con teselas", pg.locator(".leaflet-tile").count() > 0)
         chk("Ciudadano: marcadores de ecopuntos", pg.locator(".leaflet-marker-icon, .leaflet-interactive").count() >= 5)
+        chk("Ciudadano: ve el horario de atención de cada ecopunto", pg.locator("#lista-disponibilidad-vecino").inner_text().count("Atención:") == 5)
         chk("Ciudadano: ve niveles de contenedores", pg.evaluate("estadoApp.ecopuntos.length") >= 5)
         antes = pg.evaluate("estadoApp.solicitudes.length")
         pg.evaluate("abrirModalRegistro()")

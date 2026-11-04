@@ -1,109 +1,199 @@
 {
-  "annotations": {
-    "list": []
-  },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
-  "liveNow": true,
-  "panels": [
-    {
-      "collapsed": false,
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
-      "id": 1,
-      "title": "Throughput Solicitudes (req/s)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate(http_requests_total{job=\"gestion-residuos-pods\"}[1m]))",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
-      "id": 2,
-      "title": "Latencia Percentil 95 (ms)",
-      "type": "gauge",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"gestion-residuos-pods\"}[5m])) by (le)) * 1000",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
-      "id": 3,
-      "title": "Pods Activos (HPA Réplicas)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "kube_deployment_status_replicas_available{deployment=\"gestion-residuos-web\"}",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
-      "id": 4,
-      "title": "Tasa de Error 5xx (%)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))) * 100",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 8 },
-      "id": 5,
-      "title": "Consumo de CPU vs Límite HPA (70%)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{container=\"web-app\"}[2m])) / sum(kube_pod_container_resource_requests{container=\"web-app\", resource=\"cpu\"}) * 100",
-          "legendFormat": "% CPU Utilizada",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 8 },
-      "id": 6,
-      "title": "Operaciones Firestore en Tiempo Real (lecturas/escrituras)",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(firestore_document_reads_total[1m])",
-          "legendFormat": "Lecturas/s",
-          "refId": "A"
-        },
-        {
-          "expr": "rate(firestore_document_writes_total[1m])",
-          "legendFormat": "Escrituras/s",
-          "refId": "B"
-        }
-      ]
-    }
-  ],
-  "schemaVersion": 38,
-  "style": "dark",
-  "tags": ["residuos", "san-francisco", "k8s", "utn"],
+  "uid": "residuos-sf",
+  "title": "Gesti\u00f3n de Residuos San Francisco",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
   "time": {
-    "from": "now-1h",
+    "from": "now-10m",
     "to": "now"
   },
-  "title": "Gestión de Residuos Urbanos - San Francisco (Kubernetes & Firebase)",
-  "uid": "residuos-sf-prod",
-  "version": 1
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "R\u00e9plicas activas",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(nginx_up == 1)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Peticiones por segundo",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(nginx_http_requests_total[30s]))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Conexiones activas",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(nginx_connections_active)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Alertas en disparo",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Peticiones por segundo",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(nginx_http_requests_total[30s]))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Conexiones activas por r\u00e9plica",
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "nginx_connections_active",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    }
+  ]
 }
-

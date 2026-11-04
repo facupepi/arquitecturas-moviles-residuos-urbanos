@@ -26,8 +26,7 @@ spec:
         app.kubernetes.io/name: gestion-residuos-web
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8080"
-        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9113"
     spec:
       affinity:
         podAntiAffinity:
@@ -81,4 +80,24 @@ spec:
             timeoutSeconds: 2
             successThreshold: 1
             failureThreshold: 2
-
+        # Exportador de métricas de Nginx: lee el estado del servidor desde localhost y lo publica para Prometheus
+        - name: exportador-metricas
+          image: nginx/nginx-prometheus-exporter:1.3.0
+          args: ["--nginx.scrape-uri=http://127.0.0.1:8080/stub_status"]
+          ports:
+            - name: metricas
+              containerPort: 9113
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+            limits:
+              cpu: "50m"
+              memory: "32Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65534
+            capabilities:
+              drop:
+                - ALL

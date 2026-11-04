@@ -37,7 +37,7 @@ Punto de entrada general. Quien examine este proyecto, persona o agente evaluado
 | `infraestructura/iot/` | Ecosistema IoT: `mosquitto.conf`, `simulador_sensor_mqtt.py` (sensores ultrasónicos) y `worker_ingesta_mqtt.py`. |
 | `infraestructura/firestore.rules` | Reglas declarativas de seguridad y control de acceso basado en roles (RBAC) con esquemas estrictos. |
 | `infraestructura/firestore.indexes.json` | Índices compuestos optimizados para consultas por estado, fecha y cuadrilla asignada. |
-| `infraestructura/monitoreo/` | Observabilidad completa: `prometheus.yml`, reglas de alarma `alertas_residuos.yml` y tablero `grafana-dashboard.json`. |
+| `infraestructura/monitoreo/` | Prometheus (`prometheus.yml` para el clúster, `prometheus-local.yml` para la prueba local), alertas `alertas_residuos.yml`, tablero `grafana-dashboard.json` y `docker-compose.yml` que levanta la aplicación, el exportador de métricas, Prometheus y Grafana. |
 | `informe-fuente/` | Código fuente de generación editorial: `contenido.md`, `generar_informe.py` y `diagramas.py`. |
 | `informe-fuente/capturas/` | Capturas reales de la aplicación móvil en alta densidad (pantalla de ingreso, portal ciudadano, mapa, panel y recolector). |
 | `informe-fuente/diagramas/` | Diagramas vectoriales de arquitectura integral con capa IoT (`fig1`) y secuencia completa de recolección (`fig2`). |
@@ -181,9 +181,20 @@ python infraestructura/notificaciones/enviar_push.py --titulo "Jornada de limpie
 python infraestructura/notificaciones/enviar_push.py --vigilar   # avisa campañas nuevas y cambios de estado de solicitudes
 ```
 
+## Monitoreo local
+
+```bash
+docker compose -f infraestructura/monitoreo/docker-compose.yml up -d --build
+python pruebas/prueba_carga.py http://localhost:18081/ 60 60     # genera carga
+# Grafana: http://localhost:3300   Prometheus: http://localhost:9190
+docker compose -f infraestructura/monitoreo/docker-compose.yml down
+```
+
+En el clúster, cada pod lleva el exportador de métricas de Nginx como segundo contenedor (`deployment.yaml`).
+
 ## Autoescalado en un clúster local
 
-`infraestructura/k8s/probar_autoescalado.py` documenta los pasos con kind y deja el registro en `evidencia_autoescalado.txt` (2 a 10 réplicas bajo carga).
+`infraestructura/k8s/probar_autoescalado.py` documenta los pasos con kind y deja el registro en `evidencia_autoescalado.txt` (de 2 a 10 réplicas en poco más de un minuto bajo carga).
 
 ## Guion de demostración (5 minutos)
 

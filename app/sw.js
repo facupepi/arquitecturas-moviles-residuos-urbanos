@@ -1,5 +1,5 @@
 // Service Worker para PWA San Francisco Residuos (UTN FRSFCO)
-const CACHE_NAME = 'sf-residuos-v4.11';
+const CACHE_NAME = 'sf-residuos-v4.13';
 
 const PRECACHE_ASSETS = [
   './',

@@ -11,7 +11,7 @@ try:
         nav = p.chromium.launch()
         casos = {
             "estado V5 incompleto": ("SF_RESIDUOS_STATE_V5", '{"ecopuntos":[{"id":"ECO-SF-004","coords":[-31.4205,-62.111]}],"usuariosRegistrados":[{"password":"x"}]}'),
-            "estado V6 roto": ("SF_RESIDUOS_STATE_V6", '{"ecopuntos":[{"id":"ECO-SF-004","coords":[-31.4205,-62.111]}]}'),
+            "estado V7 roto": ("SF_RESIDUOS_STATE_V7", '{"ecopuntos":[{"id":"ECO-SF-004","coords":[-31.4205,-62.111]}]}'),
             "sesión local sin usuario en la nube": ("SF_RESIDUOS_AUTH_SESSION_V2", '{"nombre":"X","email":"x","rol":"autoridad","expiracion":9999999999999}'),
         }
         for nombre, (clave, valor) in casos.items():

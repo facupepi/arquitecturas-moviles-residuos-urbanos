@@ -52,7 +52,7 @@ try:
             return V.evaluate("estadoApp.solicitudes[0].id")
         id1 = pedir("E2E-PRUEBA uno")
         chk("Autoridad recibe la solicitud del vecino en vivo", espera(A, f"estadoApp.solicitudes.some(x => x.id === '{id1}')"))
-        chk("Autoridad es avisada de la nueva solicitud", espera(A, "document.getElementById('toast-titulo').innerText.includes('Nueva Solicitud')", 4000))
+        chk("Autoridad es avisada de la nueva solicitud", espera(A, "document.getElementById('toast-titulo').innerText.includes('Nueva solicitud')", 4000))
 
         # 2. La autoridad despacha a la cuadrilla Móvil 03 (por defecto) y la cuadrilla es avisada
         A.wait_for_timeout(500)
@@ -64,7 +64,7 @@ try:
                 print("  [diagnóstico", nom, "]", pg.evaluate(f"JSON.stringify((estadoApp.solicitudes.find(x => x.id === '{id1}') || null))"),
                       "| unidad:", pg.evaluate("obtenerSesionActual().unidad"), "| toast:", pg.evaluate("document.getElementById('toast-titulo').innerText"))
         chk("Cuadrilla recibe la parada asignada", ok_parada)
-        chk("Cuadrilla es avisada de la nueva parada", espera(C, "document.getElementById('toast-titulo').innerText.includes('Nueva Parada')", 4000))
+        chk("Cuadrilla es avisada de la nueva parada", espera(C, "document.getElementById('toast-titulo').innerText.includes('Nueva parada')", 4000))
         chk("Cuadrilla ve la ruta trazada en su mapa", C.evaluate("capaRutaCuadrilla !== null"))
         chk("Vecino ve su solicitud en camino y es avisado", espera(V, f"estadoApp.solicitudes.find(x => x.id === '{id1}').estado === 'en_camino'")
             and espera(V, "document.getElementById('toast-titulo').innerText.includes('Novedades')", 4000))
@@ -97,7 +97,7 @@ try:
         C.evaluate("document.querySelector('#modal-incidente form').requestSubmit()"); C.wait_for_timeout(500)
         idi = C.evaluate("estadoApp.incidentes[0].id")
         chk("Autoridad recibe el incidente de la cuadrilla", espera(A, f"estadoApp.incidentes.some(i => i.id === '{idi}')"))
-        chk("Autoridad es avisada del incidente", espera(A, "document.getElementById('toast-titulo').innerText.includes('Incidente')", 4000))
+        chk("Autoridad es avisada del incidente", espera(A, "document.getElementById('toast-titulo').innerText.includes('incidente')", 4000))
         A.evaluate(f"resolverIncidente('{idi}')")
         chk("Cuadrilla ve el incidente resuelto", espera(C, f"estadoApp.incidentes.find(i => i.id === '{idi}').estado === 'resuelto'"))
         nav.close()

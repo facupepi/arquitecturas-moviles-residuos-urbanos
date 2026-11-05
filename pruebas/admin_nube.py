@@ -51,3 +51,9 @@ def restaurar_llenado(contenedor, pct):
         json.dumps(cuerpo).encode(), method="PATCH",
         headers={"Authorization": f"Bearer {_token()}", "Content-Type": "application/json"})
     urllib.request.urlopen(req)
+
+
+def borrar_documento(ruta):
+    """Borra un documento puntual que dejó una prueba."""
+    req = urllib.request.Request(f"{BASE}/{ruta}", method="DELETE", headers={"Authorization": f"Bearer {_token()}"})
+    urllib.request.urlopen(req)

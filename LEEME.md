@@ -40,15 +40,37 @@ python -m http.server 8767 -d app      # http://localhost:8767/index.html
 
 Canales: `sf/contenedores/{id}/telemetria` (mediciones), `sf/contenedores/{id}/alarma` (llenado de 80 % o más), `sf/contenedores/{id}/comando` (órdenes, por ejemplo `{"intervalo": 10}`) y `sf/sensores/{cliente}/estado`, donde el intermediario publica el aviso de desconexión si un sensor se corta. Todo con QoS 1.
 
+Mosquitto solo acepta conexiones cifradas (puerto 8883) y con usuario; `infraestructura/iot/acl` limita qué canales usa cada uno (`sensores`, `ingesta`, `municipio`). Los certificados y el archivo de contraseñas se generan al desplegar y no se suben al repositorio:
+
 ```bash
-docker run -d -p 1883:1883 -v "$PWD/infraestructura/iot/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro" eclipse-mosquitto:2.0.18-openssl
-pip install paho-mqtt==2.1.0
-python infraestructura/iot/worker_ingesta_mqtt.py                                  # guarda cada lectura en Firestore
-python infraestructura/iot/simulador_sensor_mqtt.py --intervalo 3 --forzar-desborde
-python infraestructura/iot/simular_sensores_firebase.py --intervalo 4               # alternativa sin MQTT
+openssl req -x509 -newkey rsa:2048 -nodes -days 365 -keyout ca.key -out ca.crt -subj "/CN=CA residuos"
+openssl req -newkey rsa:2048 -nodes -keyout servidor.key -out servidor.csr -subj "/CN=mosquitto-service"
+printf "subjectAltName=DNS:localhost,DNS:mosquitto-service,IP:127.0.0.1
+" > san.ext
+openssl x509 -req -in servidor.csr -CA ca.crt -CAkey ca.key -CAcreateserial -days 365 -out servidor.crt -extfile san.ext
+docker run --rm -v "$PWD:/c" eclipse-mosquitto:2.0.18-openssl mosquitto_passwd -b -c /c/passwd sensores <clave>   # repetir con -b para ingesta y municipio
 ```
 
-En una computadora de desarrollo, el servicio de ingesta y el simulador directo escriben con la sesión del CLI de Firebase (`firebase login`). En el clúster, el servicio de ingesta usa una cuenta de servicio cargada como secreto (ver el encabezado de `iot-mosquitto.yaml`). Mosquitto acepta conexiones sin usuario: en producción hay que agregar usuarios y cifrado.
+Prueba en la computadora (con `passwd`, `acl` y `mosquitto.conf` en `config/`, y los certificados en `certs/`):
+
+```bash
+docker run -d -p 8883:8883 -v "$PWD/config:/mosquitto/config" -v "$PWD/certs:/mosquitto/certs:ro" eclipse-mosquitto:2.0.18-openssl
+pip install paho-mqtt==2.1.0
+MQTT_CA=certs/ca.crt MQTT_USUARIO=ingesta MQTT_CLAVE=<clave> python infraestructura/iot/worker_ingesta_mqtt.py
+MQTT_CA=certs/ca.crt MQTT_USUARIO=sensores MQTT_CLAVE=<clave> python infraestructura/iot/simulador_sensor_mqtt.py --forzar-desborde
+python infraestructura/iot/simular_sensores_firebase.py --intervalo 4      # alternativa sin MQTT
+```
+
+En la computadora, el servicio de ingesta escribe en Firestore con la sesión del CLI de Firebase (`firebase login`). En el clúster usa una cuenta de servicio cargada como secreto; los pasos están en el encabezado de `infraestructura/k8s/iot-mosquitto.yaml`. La evidencia de las pruebas está en `infraestructura/iot/evidencia_mqtt.txt`.
+
+## Publicar una versión nueva
+
+Cada vez que cambian los estilos hay que subir el número de versión en tres lugares: `estilos.css?v=` en `app/index.html`, el mismo nombre en la lista de `app/sw.js` y `CACHE_NAME` en `app/sw.js`. Sin eso, un navegador que ya tenía la app puede mezclar la página nueva con la hoja de estilos vieja.
+
+```bash
+cd app && npm run estilos && cd ..
+firebase deploy --only firestore:rules,hosting
+```
 
 ## Pruebas
 
@@ -61,6 +83,7 @@ Las pruebas crean cuentas temporales con clave aleatoria (`pruebas/ayuda_pruebas
 - `reglas_emulador/test.cjs`: reglas del repositorio en el emulador, incluidos los roles por correo de Google (JDK 21; `npm install && npm test`).
 - `test_estado_viejo.py`: el ingreso aparece aunque el navegador guarde datos viejos.
 - `test_push.py`: aviso push con la aplicación cerrada.
+- `test_sin_conexion.py`: la aplicación abre sin red.
 - `medir_rutas.py`: mejora del 2-opt sobre el vecino más cercano (`evidencia_rutas.txt`).
 - `prueba_carga.py URL CLIENTES SEGUNDOS`: carga concurrente. Desde Windows conviene correrla dentro de la red de Docker (ver `evidencia_carga.txt`).
 

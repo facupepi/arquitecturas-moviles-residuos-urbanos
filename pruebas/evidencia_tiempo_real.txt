@@ -1,0 +1,7 @@
+Demora entre que el vecino envía una solicitud y la autoridad la ve en su panel (sitio publicado, 5/11/2026).
+
+Dos sesiones (vecino y autoridad), cinco solicitudes seguidas: 2,1 s, 0,6 s, 0,5 s, 0,5 s y 0,7 s.
+La primera escritura de cada sesión es la más lenta, porque abre la conexión con la base.
+
+Tres sesiones en la misma computadora (vecino, autoridad y cuadrilla), seis corridas: 2,3 s, 1,9 s, 1,8 s, 1,8 s, 21,9 s y 22,8 s.
+La escritura del vecino terminó en todas en 1,5 a 2,2 s; en las dos corridas lentas la demora estuvo en la entrega a la autoridad.

@@ -2,12 +2,17 @@
 # Intermediario MQTT (Eclipse Mosquitto) y servicio de ingesta de los sensores
 # Espacio de nombres: produccion-residuos
 #
-# Antes de aplicar, desde la raíz del repositorio:
+# Solo acepta conexiones cifradas (TLS) y con usuario. Antes de aplicar, desde la raíz del repositorio:
 #   kubectl create namespace produccion-residuos
-#   kubectl -n produccion-residuos create configmap mosquitto-config --from-file=infraestructura/iot/mosquitto.conf
+#   kubectl -n produccion-residuos create configmap mosquitto-config \
+#       --from-file=infraestructura/iot/mosquitto.conf --from-file=infraestructura/iot/acl
 #   kubectl -n produccion-residuos create configmap worker-ingesta-script --from-file=infraestructura/iot/worker_ingesta_mqtt.py
-#   kubectl -n produccion-residuos create secret generic firestore-cuenta-servicio --from-file=cuenta-servicio.json=<clave de la cuenta de servicio>
-# La cuenta de servicio necesita el rol "Usuario de Cloud Datastore" para escribir la telemetría.
+#   # certificados del intermediario y archivo de contraseñas (mosquitto_passwd) de los usuarios sensores, ingesta y municipio
+#   kubectl -n produccion-residuos create secret generic mosquitto-seguridad \
+#       --from-file=ca.crt --from-file=servidor.crt --from-file=servidor.key --from-file=passwd \
+#       --from-literal=clave-ingesta=<clave del usuario ingesta>
+#   # credencial para escribir en Firestore: una cuenta de servicio con el rol "Usuario de Cloud Datastore"
+#   kubectl -n produccion-residuos create secret generic firestore-cuenta-servicio --from-file=cuenta-servicio.json=<clave>
 # ==============================================================================
 apiVersion: apps/v1
 kind: Deployment
@@ -29,15 +34,22 @@ spec:
       labels:
         app: mosquitto-broker
     spec:
+      securityContext:
+        fsGroup: 1883          # grupo del usuario mosquitto: puede leer los secretos montados
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2.0.18-openssl
           imagePullPolicy: IfNotPresent
           ports:
-            - name: mqtt-tcp
-              containerPort: 1883
+            - name: mqtt-tls
+              containerPort: 8883
             - name: mqtt-ws
               containerPort: 9001
+          readinessProbe:
+            tcpSocket:
+              port: 8883
+            initialDelaySeconds: 3
+            periodSeconds: 10
           resources:
             requests:
               cpu: "50m"
@@ -46,16 +58,29 @@ spec:
               cpu: "250m"
               memory: "128Mi"
           volumeMounts:
-            - name: config-volume
+            - name: config
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
-            - name: data-volume
+            - name: config
+              mountPath: /mosquitto/config/acl
+              subPath: acl
+            - name: seguridad
+              mountPath: /mosquitto/config/passwd
+              subPath: passwd
+            - name: seguridad
+              mountPath: /mosquitto/certs
+              readOnly: true
+            - name: datos
               mountPath: /mosquitto/data
       volumes:
-        - name: config-volume
+        - name: config
           configMap:
             name: mosquitto-config
-        - name: data-volume
+        - name: seguridad
+          secret:
+            secretName: mosquitto-seguridad
+            defaultMode: 0440
+        - name: datos
           emptyDir: {}
 ---
 apiVersion: v1
@@ -68,9 +93,9 @@ spec:
   selector:
     app: mosquitto-broker
   ports:
-    - name: mqtt-tcp
-      port: 1883
-      targetPort: 1883
+    - name: mqtt-tls
+      port: 8883
+      targetPort: 8883
     - name: mqtt-ws
       port: 9001
       targetPort: 9001
@@ -109,13 +134,34 @@ spec:
               value: "1"
             - name: BROKER_HOST
               value: "mosquitto-service"
+            - name: BROKER_PUERTO
+              value: "8883"
+            - name: MQTT_CA
+              value: /certs/ca.crt
+            - name: MQTT_USUARIO
+              value: ingesta
+            - name: MQTT_CLAVE
+              valueFrom:
+                secretKeyRef:
+                  name: mosquitto-seguridad
+                  key: clave-ingesta
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: /secretos/cuenta-servicio.json
+            # Alternativa para pruebas: un token de acceso de corta duración en lugar de la cuenta de servicio
+            - name: FIRESTORE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: firestore-token
+                  key: token
+                  optional: true
           volumeMounts:
             - name: script
               mountPath: /app
             - name: credencial
               mountPath: /secretos
+              readOnly: true
+            - name: certificados
+              mountPath: /certs
               readOnly: true
       volumes:
         - name: script
@@ -125,3 +171,9 @@ spec:
           secret:
             secretName: firestore-cuenta-servicio
             optional: true
+        - name: certificados
+          secret:
+            secretName: mosquitto-seguridad
+            items:
+              - key: ca.crt
+                path: ca.crt

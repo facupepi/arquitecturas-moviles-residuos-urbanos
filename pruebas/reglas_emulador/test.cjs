@@ -68,6 +68,16 @@ async function chk(nombre, promesa) { total++; try { await promesa; ok++; consol
   await chk('Cuadrilla registra el vaciado de un contenedor', assertSucceeds(chofer.doc('telemetria_contenedores/ECO-SF-001').update({ porcentajeLlenado: 10, alertaDesborde: false, ultimaActualizacion: new Date() })));
   await chk('Cuadrilla no sube el llenado de un contenedor', assertFails(chofer.doc('telemetria_contenedores/ECO-SF-001').update({ porcentajeLlenado: 90 })));
   await chk('Vecino no registra vaciados', assertFails(vecino.doc('telemetria_contenedores/ECO-SF-001').update({ porcentajeLlenado: 10 })));
+  const { serverTimestamp } = require('firebase/firestore');
+  const reg = (extra = {}) => ({ usuarioId: 'u3', categoria: 'reciclable', cantidadKg: 2.5, fecha: serverTimestamp(), ...extra });
+  await chk('Vecino registra residuos generados', assertSucceeds(vecino.doc('registros_residuos/r1').set(reg())));
+  await chk('Vecino no registra a nombre de otro', assertFails(vecino.doc('registros_residuos/r2').set(reg({ usuarioId: 'otro' }))));
+  await chk('Vecino no registra una categoría inventada', assertFails(vecino.doc('registros_residuos/r3').set(reg({ categoria: 'radiactivo' }))));
+  await chk('Vecino no registra cantidades fuera de rango', assertFails(vecino.doc('registros_residuos/r4').set(reg({ cantidadKg: 5000 }))));
+  await chk('Vecino no inventa la fecha', assertFails(vecino.doc('registros_residuos/r5').set(reg({ fecha: new Date(2020, 0, 1) }))));
+  await chk('Vecino no modifica un registro', assertFails(vecino.doc('registros_residuos/r1').update({ cantidadKg: 9 })));
+  await chk('Otra persona no lee el registro', assertFails(chofer.doc('registros_residuos/r1').get()));
+  await chk('La autoridad lee el registro', assertSucceeds(jefe.doc('registros_residuos/r1').get()));
   console.log(`\n${ok}/${total} verificaciones OK`);
   await env.cleanup();
   process.exit(ok === total ? 0 : 1);

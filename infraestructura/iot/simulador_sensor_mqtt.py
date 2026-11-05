@@ -10,6 +10,7 @@ Simula el comportamiento de nodos microcontroladores (ESP32 / LoRaWAN) equipados
 - Publicación periódica mediante protocolo MQTT hacia el broker municipal.
 """
 
+import os
 import sys
 import time
 import json
@@ -120,7 +121,10 @@ def generar_telemetria(contenedor, simular_desborde=False):
 def main():
     parser = argparse.ArgumentParser(description="Simulador de Telemetría IoT vía MQTT - San Francisco Residuos")
     parser.add_argument("--broker", default="localhost", help="Dirección del broker MQTT (ej: localhost, broker.emqx.io)")
-    parser.add_argument("--puerto", type=int, default=1883, help="Puerto del broker MQTT (defecto: 1883)")
+    parser.add_argument("--puerto", type=int, default=8883, help="Puerto del intermediario (8883, con TLS)")
+    parser.add_argument("--ca", default=os.environ.get("MQTT_CA"), help="certificado de la autoridad que firmó al intermediario (activa TLS)")
+    parser.add_argument("--usuario", default=os.environ.get("MQTT_USUARIO"))
+    parser.add_argument("--clave", default=os.environ.get("MQTT_CLAVE"))
     parser.add_argument("--intervalo", type=float, default=3.0, help="Segundos entre publicaciones")
     parser.add_argument("--iteraciones", type=int, default=10, help="Cantidad de paquetes a emitir (0 = infinito)")
     parser.add_argument("--forzar-desborde", action="store_true", help="Simula nivel crítico >85%% en Plaza Cívica")
@@ -145,6 +149,9 @@ def main():
             cliente_mqtt.will_set(canal_estado, json.dumps({"estado": "desconectado"}), qos=1, retain=True)
 
             def al_conectar(c, u, f, codigo, p=None):
+                if codigo != 0:
+                    print(f"[MQTT] El intermediario rechazó la conexión: {codigo}")
+                    return
                 c.publish(canal_estado, json.dumps({"estado": "conectado"}), qos=1, retain=True)
                 c.subscribe("sf/contenedores/+/comando", qos=1)
 
@@ -160,6 +167,10 @@ def main():
 
             cliente_mqtt.on_connect = al_conectar
             cliente_mqtt.on_message = al_recibir_orden
+            if args.usuario:
+                cliente_mqtt.username_pw_set(args.usuario, args.clave)
+            if args.ca:
+                cliente_mqtt.tls_set(ca_certs=args.ca)
             cliente_mqtt.connect(args.broker, args.puerto, 60)
             cliente_mqtt.loop_start()
             conectado = True

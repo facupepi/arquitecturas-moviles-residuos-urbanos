@@ -66,6 +66,22 @@ try:
     chk("Vecino no crea incidentes con gravedad inválida", llamar("POST", "/incidentes?documentId=e2e-incv",
         {"fields": dict(incidente(uV)["fields"], gravedad=S("<b>alta</b>"))}, tV) == 403)
     chk("Vecino no crea incidentes a nombre de otro", llamar("POST", "/incidentes?documentId=e2e-incv2", incidente("otro-uid"), tV) == 403)
+    reg = lambda uid, cat="reciclable", kg=2.5: {"fields": {"usuarioId": S(uid), "categoria": S(cat), "cantidadKg": {"doubleValue": kg}}}
+    def crear_registro(cuerpo, tok, nombre):
+        # la fecha la pone el servidor, igual que en la app
+        r = urllib.request.Request(BASE + ":commit", json.dumps({"writes": [{
+            "update": dict(cuerpo, name=BASE.split("/v1/")[1] + "/registros_residuos/" + nombre),
+            "updateTransforms": [{"fieldPath": "fecha", "setToServerValue": "REQUEST_TIME"}]}]}).encode(),
+            {"Content-Type": "application/json", "Authorization": f"Bearer {tok}"}, method="POST")
+        try:
+            with urllib.request.urlopen(r) as x: return x.status
+        except urllib.error.HTTPError as e: return e.code
+    chk("Vecino registra residuos generados", crear_registro(reg(uV), tV, "e2e-reg") == 200)
+    chk("Vecino no registra residuos a nombre de otro", crear_registro(reg("otro-uid"), tV, "e2e-reg2") == 403)
+    chk("Vecino no registra una categoría inventada", crear_registro(reg(uV, "radiactivo"), tV, "e2e-reg3") == 403)
+    chk("Vecino no registra cantidades fuera de rango", crear_registro(reg(uV, "resto", 5000), tV, "e2e-reg4") == 403)
+    chk("Vecino lee su registro", llamar("GET", "/registros_residuos/e2e-reg", None, tV) == 200)
+    chk("Vecino no modifica un registro", llamar("PATCH", "/registros_residuos/e2e-reg?updateMask.fieldPaths=cantidadKg", {"fields": {"cantidadKg": {"doubleValue": 9}}}, tV) == 403)
     chk("Vecino no puede listar todas las solicitudes", llamar("GET", "/solicitudes_residuos", None, tV) == 403)
     chk("Vecino no puede borrar solicitudes", llamar("DELETE", "/solicitudes_residuos/e2e-vecino", None, tV) == 403)
     chk("Vecino no puede difundir campañas", llamar("POST", "/notificaciones?documentId=e2e-v", {"fields": {"titulo": S("E2E-PRUEBA")}}, tV) == 403)
@@ -110,6 +126,10 @@ try:
     chk("Autoridad borra un incidente", llamar("DELETE", "/incidentes/e2e-inc", None, tA) == 200)
 finally:
     llamar("DELETE", "/dispositivos/e2e-tok2", None, tV)
+    try:
+        admin_nube.borrar_documento("registros_residuos/e2e-reg")
+    except Exception:
+        pass
     try:
         n = admin_nube.borrar_con_marca("E2E-PRUEBA") + admin_nube.borrar_con_marca("SOL-E2E") + admin_nube.borrar_con_marca("INC-E2E")
         print("limpieza:", n, "documentos")

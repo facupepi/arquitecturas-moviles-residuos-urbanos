@@ -1,0 +1,19 @@
+# Permisos por usuario del intermediario MQTT
+
+# Sensores de los contenedores: publican mediciones, alarmas y su estado; reciben órdenes
+user sensores
+topic write sf/contenedores/+/telemetria
+topic write sf/contenedores/+/alarma
+topic write sf/sensores/+/estado
+topic read sf/contenedores/+/comando
+
+# Servicio de ingesta: lee todo lo que publican los sensores
+user ingesta
+topic read sf/contenedores/+/telemetria
+topic read sf/contenedores/+/alarma
+topic read sf/sensores/+/estado
+
+# Municipio: envía órdenes a los sensores y puede observar los canales
+user municipio
+topic write sf/contenedores/+/comando
+topic read sf/#

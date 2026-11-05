@@ -2,7 +2,7 @@
 
 Uso: test_multidispositivo.py [URL]   (sin URL levanta la copia local de app/)
 """
-import pathlib, subprocess, sys, time
+import json, pathlib, subprocess, sys, time
 from playwright.sync_api import sync_playwright
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import admin_nube
@@ -25,15 +25,21 @@ def espera(pg, js, t=10000):
     except Exception:
         return False
 
+CONSOLA = []
+
 def entrar(ctx, rol):
-    pg = ctx.new_page(); pg.on("dialog", lambda d: d.accept()); pg.goto(URL, wait_until="load"); pg.wait_for_timeout(1500)
+    pg = ctx.new_page(); pg.on("dialog", lambda d: d.accept())
+    pg.on("console", lambda m: CONSOLA.append(f"[{rol}] {m.text[:160]}") if m.type in ("warning", "error") else None)
+    pg.goto(URL, wait_until="load"); pg.wait_for_timeout(1500)
     pg.evaluate("([e, c]) => firebase.auth().signInWithEmailAndPassword(e, c)", list(ayuda_pruebas.cuenta(rol)[:2]))
     espera(pg, "!!(authFirebase && authFirebase.currentUser) && !!obtenerSesionActual()", 15000)
     return pg
 
 try:
     with sync_playwright() as p:
-        nav = p.chromium.launch()
+        # Tres sesiones en el mismo navegador: sin esto, Chrome frena las pestañas sin foco y demora sus conexiones
+        nav = p.chromium.launch(args=["--disable-background-timer-throttling", "--disable-renderer-backgrounding",
+                                      "--disable-backgrounding-occluded-windows"])
         mk = lambda: nav.new_context(viewport={"width": 1280, "height": 900}, service_workers="block")
         ctxV, ctxA, ctxC = mk(), mk(), mk()
         V = entrar(ctxV, "ciudadano"); A = entrar(ctxA, "autoridad"); C = entrar(ctxC, "recolector")
@@ -51,7 +57,13 @@ try:
             V.evaluate("document.getElementById('form-registro-residuo').requestSubmit()"); V.wait_for_timeout(600)
             return V.evaluate("estadoApp.solicitudes[0].id")
         id1 = pedir("E2E-PRUEBA uno")
-        chk("Autoridad recibe la solicitud del vecino en vivo", espera(A, f"estadoApp.solicitudes.some(x => x.id === '{id1}')"))
+        # Lo habitual es 0,5 a 2 s; con tres sesiones en la misma computadora hubo demoras aisladas de hasta 23 s
+        recibida = espera(A, f"estadoApp.solicitudes.some(x => x.id === '{id1}')", 30000)
+        if not recibida:
+            en_nube = [d for d in admin_nube.listar("solicitudes_residuos") if id1 in json.dumps(d)]
+            print("  [diagnóstico] en la nube:", len(en_nube), "| consola:", [c for c in CONSOLA if "Firestore" in c or "AVISO" in c][-4:])
+            print("  [diagnóstico] llega más tarde:", espera(A, f"estadoApp.solicitudes.some(x => x.id === '{id1}')", 20000))
+        chk("Autoridad recibe la solicitud del vecino en vivo", recibida)
         chk("Autoridad es avisada de la nueva solicitud", espera(A, "document.getElementById('toast-titulo').innerText.includes('Nueva solicitud')", 4000))
 
         # 2. La autoridad despacha a la cuadrilla Móvil 03 (por defecto) y la cuadrilla es avisada

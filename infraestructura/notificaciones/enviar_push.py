@@ -126,6 +126,9 @@ def vigilar(intervalo):
             if antes is not None and ahora != antes and ahora in TEXTO_ESTADO:
                 titulo, mensaje = TEXTO_ESTADO[ahora]
                 print("Solicitud", ahora, "->", enviar(dispositivos(uid=valor(f.get("usuarioId"))), titulo, mensaje))
+                if ahora == "en_camino":   # la cuadrilla también se entera de la parada nueva
+                    parada = f"{valor(f.get('subcategoria')) or 'Retiro'} en {valor(f.get('direccion')) or 'la ciudad'}"
+                    print("Parada asignada ->", enviar(dispositivos(rol="recolector"), "Nueva parada asignada", parada))
 
 
 def main():

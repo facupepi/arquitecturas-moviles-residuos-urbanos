@@ -1,16 +1,17 @@
 // Service Worker para PWA San Francisco Residuos (UTN FRSFCO)
-const CACHE_NAME = 'sf-residuos-v4.21';
+const CACHE_NAME = 'sf-residuos-v4.26';
 
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './estilos.css',
+  './estilos.css?v=4.26',
   './vendor/leaflet/leaflet.css',
   './vendor/leaflet/leaflet.js',
   './vendor/lucide.min.js',
   './fonts/quicksand-latin.woff2',
   './brand/municipalidad-blanco.png',
+  './brand/ciudad.webp',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable.png',

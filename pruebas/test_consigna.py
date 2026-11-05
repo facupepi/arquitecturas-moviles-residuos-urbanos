@@ -58,6 +58,12 @@ try:
         chk("Ciudadano: no ve controles de sensores ni panel municipal", not visible("panel-iot-card") and not visible("btn-forzar-desborde-ui") and not visible("seccion-kpis-muni"))
         ir("contenedores")
         chk("Ciudadano: ve los horarios de recolección por zona", visible("tabla-cronograma-vecino") and pg.locator("#tabla-cronograma-vecino tr").count() >= 3)
+        ir("inicio")
+        pg.click("#btn-registrar-generado"); pg.select_option("#gen-categoria", "organico"); pg.fill("#gen-cantidad", "3.5")
+        pg.evaluate("document.getElementById('form-generado').requestSubmit()"); pg.wait_for_timeout(1500)
+        chk("Ciudadano: registra residuos generados (categoría y cantidad) sin pedir retiro",
+            "3,5 kg" in pg.inner_text("#stat-ciudadano-registrado") and pg.evaluate("document.getElementById('modal-generado').classList.contains('hidden')"),
+            pg.inner_text("#stat-ciudadano-registrado"))
         r = pg.evaluate("""()=>{const base={id:'B',coords:COORDS_SF};let ok=true,mejoras=0;
             for(let k=0;k<40;k++){const ds=Array.from({length:8},(_,i)=>({id:'P'+i,coords:[-31.4290+(Math.random()-.5)*.03,-62.0820+(Math.random()-.5)*.04]}));
               const t=resolverTSP(base,ds); if(t.distanciaKm>t.distanciaInicialKm+1e-6) ok=false; if(t.distanciaKm<t.distanciaInicialKm-1e-6) mejoras++; if(t.ruta.length!==ds.length+2) ok=false}

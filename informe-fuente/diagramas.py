@@ -266,19 +266,21 @@ def generar_figura_1():
          VERDE, VERDE_FONDO, 'telefono')
     caja(18, 180, 209, 66, "Service worker", "Abre la aplicación sin señal y muestra los avisos con la aplicación cerrada.",
          VERDE, VERDE_FONDO, 'carpeta')
-    ys = [44, 96, 148, 200]
-    caja(333, ys[0], 209, 46, "Firebase Authentication", "Ingreso con la cuenta de Google.", NARANJA, NARANJA_FONDO, 'escudo')
-    caja(333, ys[1], 209, 46, "Cloud Firestore", "Datos en vivo y permisos por perfil.", NARANJA, NARANJA_FONDO, 'base')
-    caja(333, ys[2], 209, 46, "Mapas Esri y OSRM", "Plano de la ciudad y recorridos.", NARANJA, NARANJA_FONDO, 'globo')
-    caja(333, ys[3], 209, 46, "Firebase Cloud Messaging", "Entrega de avisos a los celulares.", NARANJA, NARANJA_FONDO, 'enviar')
-    flecha((229, 67), (331, 67), NARANJA, "Ingreso", doble=True)
-    flecha((229, 119), (331, 119), NARANJA, "Datos en vivo", doble=True)
-    flecha((331, 165), (229, 165), NARANJA, "Mapa y rutas", discontinua=True)
-    flecha((331, 223), (229, 213), NARANJA, "Aviso push")
+    ys = [42, 84, 126, 168, 210]
+    caja(333, ys[0], 209, 40, "Firebase Hosting", "Publica la aplicación.", NARANJA, NARANJA_FONDO, 'servidor')
+    caja(333, ys[1], 209, 40, "Firebase Authentication", "Ingreso con Google.", NARANJA, NARANJA_FONDO, 'escudo')
+    caja(333, ys[2], 209, 40, "Cloud Firestore", "Datos en vivo y permisos.", NARANJA, NARANJA_FONDO, 'base')
+    caja(333, ys[3], 209, 40, "Mapas Esri y OSRM", "Plano y recorridos.", NARANJA, NARANJA_FONDO, 'globo')
+    caja(333, ys[4], 209, 40, "Firebase Cloud Messaging", "Avisos a los celulares.", NARANJA, NARANJA_FONDO, 'enviar')
+    flecha((331, 62), (229, 62), NARANJA, "Publicación")
+    flecha((229, 104), (331, 104), NARANJA, "Ingreso", doble=True)
+    flecha((229, 146), (331, 146), NARANJA, "Datos en vivo", doble=True)
+    flecha((331, 188), (229, 165), NARANJA, "Mapa y rutas", discontinua=True)
+    flecha((331, 230), (229, 222), NARANJA, "Aviso push")
 
     # Infraestructura de la aplicación
     banda(10, 298, 292, 206, "INFRAESTRUCTURA DE LA APLICACIÓN", AZUL)
-    caja(18, 334, 130, 92, "Kubernetes", "Recibe el tráfico y lo reparte entre réplicas de la imagen Docker.", AZUL, AZUL_FONDO, 'engranaje')
+    caja(18, 334, 130, 92, "Balanceador y Kubernetes", "Reparte el tráfico entre réplicas de la imagen Docker.", AZUL, AZUL_FONDO, 'engranaje')
     caja(178, 334, 116, 92, "Autoescalado", "Suma réplicas al subir la demanda, de 2 a 10.", AZUL, AZUL_FONDO, 'velocimetro')
     caja(18, 450, 276, 46, "Prometheus y Grafana", "Tablero de métricas y alertas de caída.", PURPURA, PURPURA_FONDO, 'barras')
     flecha((83, 298), (83, 256), AZUL, "Entrega la aplicación", en=(83, 277))

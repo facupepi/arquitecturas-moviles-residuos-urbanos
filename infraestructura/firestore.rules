@@ -100,6 +100,19 @@ service cloud.firestore {
       allow delete: if esAutoridad();
     }
 
+    // Colección: registro de residuos generados por cada vecino (no crea retiros)
+    match /registros_residuos/{registroId} {
+      allow read: if esAutoridad() || (estaAutenticado() && resource.data.usuarioId == request.auth.uid);
+      allow create: if estaAutenticado() &&
+        request.resource.data.keys().hasOnly(['usuarioId', 'categoria', 'cantidadKg', 'fecha']) &&
+        request.resource.data.usuarioId == request.auth.uid &&
+        request.resource.data.categoria in ['reciclable', 'organico', 'resto', 'voluminoso', 'peligroso'] &&
+        request.resource.data.cantidadKg is number &&
+        request.resource.data.cantidadKg > 0 && request.resource.data.cantidadKg <= 1000 &&
+        request.resource.data.fecha == request.time;
+      allow update, delete: if false;
+    }
+
     // Colección: Rutas de recolección planificadas
     match /rutas_recoleccion/{rutaId} {
       allow read: if esRecolector() || esAutoridad();

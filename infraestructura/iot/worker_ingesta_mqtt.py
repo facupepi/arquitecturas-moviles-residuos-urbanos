@@ -16,7 +16,8 @@ Credencial para escribir en Firestore, en este orden:
   3. en una computadora de desarrollo, la sesión del CLI de Firebase (`firebase login`).
 Con --sin-nube solo procesa y muestra los mensajes.
 
-Uso: python worker_ingesta_mqtt.py --broker localhost --puerto 1883
+Uso: python worker_ingesta_mqtt.py --broker localhost --ca ca.crt --usuario ingesta --clave ...
+(también por variables de entorno BROKER_HOST, BROKER_PUERTO, MQTT_CA, MQTT_USUARIO y MQTT_CLAVE)
 """
 import argparse
 import json
@@ -143,13 +144,20 @@ def main():
     global sin_nube
     ap = argparse.ArgumentParser(description="Servicio de ingesta MQTT de los contenedores")
     ap.add_argument("--broker", default=os.environ.get("BROKER_HOST", "localhost"))
-    ap.add_argument("--puerto", type=int, default=int(os.environ.get("BROKER_PUERTO", "1883")))
+    ap.add_argument("--puerto", type=int, default=int(os.environ.get("BROKER_PUERTO", "8883")))
+    ap.add_argument("--ca", default=os.environ.get("MQTT_CA"), help="certificado de la autoridad que firmó al intermediario (activa TLS)")
+    ap.add_argument("--usuario", default=os.environ.get("MQTT_USUARIO"))
+    ap.add_argument("--clave", default=os.environ.get("MQTT_CLAVE"))
     ap.add_argument("--sin-nube", action="store_true", help="no escribe en Firestore")
     a = ap.parse_args()
     sin_nube = a.sin_nube
     cliente = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"ingesta-sf-{os.getpid()}")
     cliente.on_connect = al_conectar
     cliente.on_message = al_recibir
+    if a.usuario:
+        cliente.username_pw_set(a.usuario, a.clave)
+    if a.ca:
+        cliente.tls_set(ca_certs=a.ca)
     cliente.connect(a.broker, a.puerto, 60)
     print(f"[INGESTA] Escuchando en {a.broker}:{a.puerto}")
     try:

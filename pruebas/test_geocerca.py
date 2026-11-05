@@ -12,7 +12,8 @@ res = []
 def chk(n, c, e=""): res.append(bool(c)); print("OK   " if c else "FALLA", n, e)
 
 def caso(nav, lat, lng, aceptar):
-    ctx = nav.new_context(geolocation={"latitude": lat, "longitude": lng}, permissions=["geolocation"], service_workers="block")
+    admin_nube.restaurar_llenado("ECO-SF-001", 90)   # en la nube también: si no, la lectura en vivo pisa el valor local
+    ctx =nav.new_context(geolocation={"latitude": lat, "longitude": lng}, permissions=["geolocation"], service_workers="block")
     pg = ctx.new_page(); dialogos = []
     pg.on("dialog", lambda d: (dialogos.append(d.message), d.accept() if aceptar else d.dismiss()))
     pg.goto(URL); pg.wait_for_timeout(1500)
@@ -30,7 +31,7 @@ try:
         r, d = caso(nav, -31.42881, -62.08251, False)
         chk("Dentro de 35 m: se confirma sin avisos", r == [10, "dentro"] and not d, f"{r} {d}")
         r, d = caso(nav, -31.4000, -62.0000, False)
-        chk("A kilómetros del punto y se rechaza: no se confirma", r[0] != 10 and len(d) == 1, f"{r} {d}")
+        chk("A kilómetros del punto y se rechaza: no se confirma", r == [90, None] and len(d) == 1, f"{r} {d}")
         r, d = caso(nav, -31.4000, -62.0000, True)
         chk("A kilómetros del punto y se acepta: queda registrada fuera de la geocerca", r == [10, "fuera"], f"{r}")
         nav.close()

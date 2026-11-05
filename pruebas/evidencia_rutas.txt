@@ -1,0 +1,5 @@
+Mejora del 2-opt sobre el vecino más cercano (función resolverTSP de app/index.html),
+1.000 conjuntos de paradas al azar por tamaño, semilla 2026:
+   5 paradas: 4.9 % en promedio; mejoró 821 conjuntos y empeoró 0
+   8 paradas: 6.2 % en promedio; mejoró 875 conjuntos y empeoró 0
+  12 paradas: 7.5 % en promedio; mejoró 940 conjuntos y empeoró 0

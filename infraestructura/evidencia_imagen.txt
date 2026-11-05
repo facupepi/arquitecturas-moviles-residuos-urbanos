@@ -1,0 +1,7 @@
+Medición de la imagen Docker, 4/11/2026 (Docker 29.6.2).
+  docker build -f infraestructura/Dockerfile -t residuos-web:medicion .
+  docker images: residuos-web:medicion 30.2MB, nginx:latest 243MB (88 % menos).
+Tiempo desde docker run hasta la primera respuesta HTTP 200, cinco arranques de cada una:
+  nginx:latest           mediana 0,88 s (1,35 0,81 0,92 0,84 0,88)
+  residuos-web:medicion  mediana 0,92 s (0,92 0,74 0,79 1,90 0,96)
+Las dos arrancan en menos de un segundo; la diferencia no es significativa.

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """Simulador de Sensores IoT para Contenedores Urbanos Inteligentes
 Cátedra: Arquitecturas Móviles - UTN Facultad Regional San Francisco (UTN FRSFCO)
-Autores: Facundo Pepino y Mauricio Truchet
 
 Simula el comportamiento de nodos microcontroladores (ESP32 / LoRaWAN) equipados con:
 - Sensor ultrasónico de distancia (HC-SR04 / JSN-SR04T) para calcular volumen ocupado.
@@ -125,6 +124,7 @@ def main():
     parser.add_argument("--intervalo", type=float, default=3.0, help="Segundos entre publicaciones")
     parser.add_argument("--iteraciones", type=int, default=10, help="Cantidad de paquetes a emitir (0 = infinito)")
     parser.add_argument("--forzar-desborde", action="store_true", help="Simula nivel crítico >85%% en Plaza Cívica")
+    parser.add_argument("--cortar", action="store_true", help="Al terminar, corta la conexión sin despedirse (simula un sensor sin batería)")
     args = parser.parse_args()
 
     print("=" * 75)
@@ -138,7 +138,28 @@ def main():
 
     if PAHO_DISPONIBLE:
         try:
-            cliente_mqtt = mqtt.Client(client_id=f"simulador-sf-{random.randint(1000, 9999)}")
+            id_cliente = f"simulador-sf-{random.randint(1000, 9999)}"
+            cliente_mqtt = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=id_cliente)
+            canal_estado = f"sf/sensores/{id_cliente}/estado"
+            # Aviso de desconexión: si el sensor se queda sin batería o sin señal, el intermediario lo publica solo
+            cliente_mqtt.will_set(canal_estado, json.dumps({"estado": "desconectado"}), qos=1, retain=True)
+
+            def al_conectar(c, u, f, codigo, p=None):
+                c.publish(canal_estado, json.dumps({"estado": "conectado"}), qos=1, retain=True)
+                c.subscribe("sf/contenedores/+/comando", qos=1)
+
+            def al_recibir_orden(c, u, msg):
+                # Órdenes del municipio, por ejemplo {"intervalo": 10} para cambiar la frecuencia de muestreo
+                try:
+                    orden = json.loads(msg.payload.decode("utf-8"))
+                    if "intervalo" in orden:
+                        args.intervalo = max(0.5, float(orden["intervalo"]))
+                        print(f"[ORDEN] Nueva frecuencia de muestreo: cada {args.intervalo} s")
+                except ValueError:
+                    pass
+
+            cliente_mqtt.on_connect = al_conectar
+            cliente_mqtt.on_message = al_recibir_orden
             cliente_mqtt.connect(args.broker, args.puerto, 60)
             cliente_mqtt.loop_start()
             conectado = True
@@ -166,6 +187,10 @@ def main():
             # Publicación MQTT
             if conectado and cliente_mqtt:
                 cliente_mqtt.publish(topic, payload_compacto, qos=1)
+                if data["alarmas"]["requiere_vaciado_urgente"]:
+                    cliente_mqtt.publish(f"sf/contenedores/{c['id']}/alarma", json.dumps({
+                        "motivo": "Llenado de 80 % o más", "porcentaje_llenado": data["telemetria"]["porcentaje_llenado"],
+                        "timestamp_iso": data["timestamp_iso"]}), qos=1)
 
             # Salida en consola
             estado_alerta = "🚨 CRÍTICO (>80%)" if data["alarmas"]["requiere_vaciado_urgente"] else "🟢 NORMAL"
@@ -184,8 +209,14 @@ def main():
         print("\n[INFO] Simulación interrumpida por el usuario.")
     finally:
         if conectado and cliente_mqtt:
-            cliente_mqtt.loop_stop()
-            cliente_mqtt.disconnect()
+            time.sleep(1)
+            if args.cortar:
+                cliente_mqtt.loop_stop()
+                cliente_mqtt.socket().close()   # cierre abrupto: el intermediario publica el aviso de desconexión
+            else:
+                cliente_mqtt.publish(canal_estado, json.dumps({"estado": "apagado"}), qos=1, retain=True).wait_for_publish(3)
+                cliente_mqtt.loop_stop()
+                cliente_mqtt.disconnect()
 
 if __name__ == "__main__":
     main()

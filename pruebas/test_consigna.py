@@ -37,11 +37,14 @@ def login(pg, email, clave=None):
 def salir(pg):
     pg.evaluate("cerrarSesion()"); pg.wait_for_timeout(600)
 
+import admin_nube
+previo_llenado = admin_nube.llenado("ECO-SF-001")   # la cuadrilla lo vacía durante la prueba
 try:
     with sync_playwright() as p:
         nav = p.chromium.launch()
         ctx = nav.new_context(viewport={"width": 1280, "height": 900}, service_workers="block")
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errs.append(str(e)))
+        dialogos = []; pg.on("dialog", lambda d: (dialogos.append(d.message), d.accept()))
         pg.goto(URL, wait_until="load"); pg.wait_for_timeout(1500)
         chk("Arranca en pantalla de login (sin sesión automática)", pg.locator("#btn-google-login").is_visible())
 
@@ -156,6 +159,7 @@ try:
         pg.fill("#input-pesaje-recolector", "14.5")
         pg.evaluate("void confirmarRecoleccionEnTerritorio()"); pg.wait_for_timeout(800)
         chk("Cuadrilla: confirma recolección (vacía contenedor)", pg.evaluate("estadoApp.ecopuntos.find(e=>e.id==='ECO-SF-001').capacidad") <= 25)
+        chk("Cuadrilla: sin ubicación del teléfono pide confirmación expresa", any("ubicación" in m for m in dialogos), str(dialogos)[:80])
         n = pg.evaluate("estadoApp.incidentes.length")
         pg.evaluate("abrirModalReporteIncidente()")
         pg.fill("#inc-ubicacion", "Av. Urquiza y Roca"); pg.fill("#inc-descripcion", "E2E-PRUEBA contenedor dañado")
@@ -178,6 +182,7 @@ finally:
     try:
         import admin_nube
         admin_nube.borrar_con_marca("E2E-PRUEBA")
+        admin_nube.restaurar_llenado("ECO-SF-001", previo_llenado)
     except Exception as e:
         print("(no se pudo limpiar la nube:", str(e)[:80], ")")
 

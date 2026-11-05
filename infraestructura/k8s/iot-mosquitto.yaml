@@ -1,7 +1,13 @@
 # ==============================================================================
-# Despliegue de Broker MQTT (Eclipse Mosquitto) y Worker de Ingesta IoT en K8s
+# Intermediario MQTT (Eclipse Mosquitto) y servicio de ingesta de los sensores
 # Espacio de nombres: produccion-residuos
-# Cátedra: Arquitecturas Móviles - UTN FRSFCO
+#
+# Antes de aplicar, desde la raíz del repositorio:
+#   kubectl create namespace produccion-residuos
+#   kubectl -n produccion-residuos create configmap mosquitto-config --from-file=infraestructura/iot/mosquitto.conf
+#   kubectl -n produccion-residuos create configmap worker-ingesta-script --from-file=infraestructura/iot/worker_ingesta_mqtt.py
+#   kubectl -n produccion-residuos create secret generic firestore-cuenta-servicio --from-file=cuenta-servicio.json=<clave de la cuenta de servicio>
+# La cuenta de servicio necesita el rol "Usuario de Cloud Datastore" para escribir la telemetría.
 # ==============================================================================
 apiVersion: apps/v1
 kind: Deployment
@@ -90,17 +96,32 @@ spec:
       containers:
         - name: ingesta-subscriptor
           image: python:3.11-slim
-          command: ["python", "/app/worker_ingesta_mqtt.py", "--broker", "mosquitto-service"]
+          command: ["sh", "-c", "pip install --no-cache-dir -q paho-mqtt==2.1.0 google-auth==2.35.0 requests==2.32.3 && python /app/worker_ingesta_mqtt.py"]
           resources:
             requests:
               cpu: "50m"
               memory: "64Mi"
             limits:
               cpu: "200m"
-              memory: "128Mi"
+              memory: "192Mi"
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
             - name: BROKER_HOST
               value: "mosquitto-service"
-
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secretos/cuenta-servicio.json
+          volumeMounts:
+            - name: script
+              mountPath: /app
+            - name: credencial
+              mountPath: /secretos
+              readOnly: true
+      volumes:
+        - name: script
+          configMap:
+            name: worker-ingesta-script
+        - name: credencial
+          secret:
+            secretName: firestore-cuenta-servicio
+            optional: true

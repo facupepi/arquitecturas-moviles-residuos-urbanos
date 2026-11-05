@@ -13,6 +13,14 @@ async function chk(nombre, promesa) { total++; try { await promesa; ok++; consol
     await db.doc('roles_por_correo/jefe@ejemplo.invalid').set({ rol: 'autoridad' });
     await db.doc('roles_por_correo/chofer@ejemplo.invalid').set({ rol: 'recolector' });
     await db.doc('solicitudes_residuos/s1').set({ usuarioId: 'otro', estado: 'pendiente', tipoResiduo: 'voluminoso', direccion: 'Calle 12345', fechaCreacion: new Date() });
+    await db.doc('solicitudes_residuos/s3').set({ solicitudId: 'SOL-SF-300', usuarioId: 'u3', estado: 'pendiente', tipoResiduo: 'voluminoso', direccion: 'Calle 12345', fechaCreacion: new Date() });
+    await db.doc('incidentes/i1').set({ incidenteId: 'INC-SF-100', tipo: 'Contenedor roto', ubicacion: 'Calle 1', gravedad: 'media', estado: 'abierto', creadoPor: 'u3' });
+    await db.doc('dispositivos/tok-vecino').set({ uid: 'u3', rol: 'ciudadano', actualizado: new Date() });
+    await db.doc('telemetria_contenedores/ECO-SF-001').set({ porcentajeLlenado: 90, alertaDesborde: true });
+    await db.doc('solicitudes_residuos/s3').set({ solicitudId: 'SOL-SF-300', usuarioId: 'u3', estado: 'pendiente', tipoResiduo: 'voluminoso', direccion: 'Calle 12345', fechaCreacion: new Date() });
+    await db.doc('incidentes/i1').set({ incidenteId: 'INC-SF-100', tipo: 'Contenedor roto', ubicacion: 'Calle 1', gravedad: 'media', estado: 'abierto', creadoPor: 'u3' });
+    await db.doc('dispositivos/tok-vecino').set({ uid: 'u3', rol: 'ciudadano', actualizado: new Date() });
+    await db.doc('telemetria_contenedores/ECO-SF-001').set({ porcentajeLlenado: 90, alertaDesborde: true });
   });
   const jefe = env.authenticatedContext('u1', google('jefe@ejemplo.invalid')).firestore();
   const chofer = env.authenticatedContext('u2', google('chofer@ejemplo.invalid')).firestore();
@@ -36,6 +44,30 @@ async function chk(nombre, promesa) { total++; try { await promesa; ok++; consol
   await chk('Nadie lista los roles', assertFails(jefe.collection('roles_por_correo').get()));
   await chk('Nadie se asigna un rol', assertFails(vecino.doc('roles_por_correo/vecino@ejemplo.invalid').set({ rol: 'autoridad' })));
   await chk('Ni siquiera la autoridad escribe roles', assertFails(jefe.doc('roles_por_correo/otro@ejemplo.invalid').set({ rol: 'autoridad' })));
+  const sol = (extra = {}) => ({ solicitudId: 'SOL-SF-123456', usuarioId: 'u3', estado: 'pendiente', tipoResiduo: 'voluminoso',
+    direccion: 'Bv. 25 de Mayo 1420', fechaCreacion: new Date(), ...extra });
+  const inc = (extra = {}) => ({ incidenteId: 'INC-SF-123456', tipo: 'Contenedor roto', ubicacion: 'Calle 1', gravedad: 'alta',
+    estado: 'abierto', creadoPor: 'u3', ...extra });
+  await chk('Vecino crea una solicitud válida', assertSucceeds(vecino.doc('solicitudes_residuos/n1').set(sol())));
+  await chk('Vecino no crea una solicitud con código inválido', assertFails(vecino.doc('solicitudes_residuos/n2').set(sol({ solicitudId: "SOL-');alert(1)//" }))));
+  await chk('Vecino no crea una solicitud con campos extra', assertFails(vecino.doc('solicitudes_residuos/n3').set(sol({ cuadrilla: 'Móvil 03' }))));
+  await chk('Vecino no marca como retirada su solicitud', assertFails(vecino.doc('solicitudes_residuos/s3').update({ estado: 'recolectado' })));
+  await chk('Vecino no se asigna una cuadrilla', assertFails(vecino.doc('solicitudes_residuos/s3').update({ estado: 'en_camino', cuadrilla: 'Móvil 03' })));
+  await chk('Vecino cancela su solicitud pendiente', assertSucceeds(vecino.doc('solicitudes_residuos/s3').update({ estado: 'cancelado' })));
+  await chk('Cuadrilla confirma con peso y ubicación', assertSucceeds(chofer.doc('solicitudes_residuos/s1').update({ estado: 'recolectado', pesoRealKg: 12, geocerca: 'fuera', distanciaM: 80, observacionesRecoleccion: 'Bolsas rotas' })));
+  await chk('Cuadrilla no cambia la dirección', assertFails(chofer.doc('solicitudes_residuos/s1').update({ direccion: 'Otra 1234' })));
+  await chk('Vecino crea un incidente válido', assertSucceeds(vecino.doc('incidentes/n1').set(inc())));
+  await chk('Vecino no crea un incidente con gravedad inventada', assertFails(vecino.doc('incidentes/n2').set(inc({ gravedad: '<b>x</b>' }))));
+  await chk('Vecino no crea un incidente a nombre de otro', assertFails(vecino.doc('incidentes/n3').set(inc({ creadoPor: 'otro' }))));
+  await chk('Anónimo no lee incidentes', assertFails(anonimo.collection('incidentes').get()));
+  await chk('Cuadrilla resuelve un incidente', assertSucceeds(chofer.doc('incidentes/i1').update({ estado: 'resuelto' })));
+  await chk('Cuadrilla no cambia el tipo de un incidente', assertFails(chofer.doc('incidentes/i1').update({ tipo: 'Otro' })));
+  await chk('Cuadrilla no borra incidentes', assertFails(chofer.doc('incidentes/i1').delete()));
+  await chk('Vecino no se declara autoridad en su dispositivo', assertFails(vecino.doc('dispositivos/tok2').set({ uid: 'u3', rol: 'autoridad', actualizado: new Date() })));
+  await chk('Nadie toma el dispositivo de otra persona', assertFails(chofer.doc('dispositivos/tok-vecino').set({ uid: 'u2', rol: 'recolector', actualizado: new Date() })));
+  await chk('Cuadrilla registra el vaciado de un contenedor', assertSucceeds(chofer.doc('telemetria_contenedores/ECO-SF-001').update({ porcentajeLlenado: 10, alertaDesborde: false, ultimaActualizacion: new Date() })));
+  await chk('Cuadrilla no sube el llenado de un contenedor', assertFails(chofer.doc('telemetria_contenedores/ECO-SF-001').update({ porcentajeLlenado: 90 })));
+  await chk('Vecino no registra vaciados', assertFails(vecino.doc('telemetria_contenedores/ECO-SF-001').update({ porcentajeLlenado: 10 })));
   console.log(`\n${ok}/${total} verificaciones OK`);
   await env.cleanup();
   process.exit(ok === total ? 0 : 1);

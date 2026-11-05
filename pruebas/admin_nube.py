@@ -28,3 +28,26 @@ def borrar_con_marca(marca, colecciones=("solicitudes_residuos", "notificaciones
                 urllib.request.urlopen(urllib.request.Request(f"https://firestore.googleapis.com/v1/{d['name']}", method="DELETE",
                     headers={"Authorization": f"Bearer {t}"})); n += 1
     return n
+
+
+def llenado(contenedor):
+    """Porcentaje de llenado guardado en la telemetría de un contenedor (None si no existe)."""
+    req = urllib.request.Request(f"{BASE}/telemetria_contenedores/{contenedor}", headers={"Authorization": f"Bearer {_token()}"})
+    try:
+        campos = json.load(urllib.request.urlopen(req)).get("fields", {})
+    except urllib.error.HTTPError:
+        return None
+    v = campos.get("porcentajeLlenado", {})
+    return float(v.get("doubleValue", v.get("integerValue", 0))) if v else None
+
+
+def restaurar_llenado(contenedor, pct):
+    """Vuelve el contenedor al llenado que tenía antes de una prueba que lo vació."""
+    if pct is None:
+        return
+    cuerpo = {"fields": {"porcentajeLlenado": {"doubleValue": pct}, "alertaDesborde": {"booleanValue": pct >= 80}}}
+    req = urllib.request.Request(
+        f"{BASE}/telemetria_contenedores/{contenedor}?updateMask.fieldPaths=porcentajeLlenado&updateMask.fieldPaths=alertaDesborde",
+        json.dumps(cuerpo).encode(), method="PATCH",
+        headers={"Authorization": f"Bearer {_token()}", "Content-Type": "application/json"})
+    urllib.request.urlopen(req)

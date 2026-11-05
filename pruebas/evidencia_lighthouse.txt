@@ -1,0 +1,9 @@
+Lighthouse 12.6.1 sobre https://sf-residuos-urbanos-utn.web.app/ (5/11/2026), Chrome sin interfaz.
+  npx lighthouse@12.6.1 https://sf-residuos-urbanos-utn.web.app/ [--preset=desktop]
+
+Celular (red 4G simulada), cinco corridas:
+  rendimiento 80, 87, 67, 67, 67   accesibilidad 100   buenas prácticas 100   buscadores 92
+  primer contenido entre 1,3 y 4,9 s; peso total de la página 505 KB
+Escritorio:
+  rendimiento 100   accesibilidad 100   buenas prácticas 100   buscadores 92
+  primer contenido 0,3 s; peso total 376 KB

@@ -1,5 +1,5 @@
 // Service Worker para PWA San Francisco Residuos (UTN FRSFCO)
-const CACHE_NAME = 'sf-residuos-v4.14';
+const CACHE_NAME = 'sf-residuos-v4.21';
 
 const PRECACHE_ASSETS = [
   './',
@@ -17,12 +17,24 @@ const PRECACHE_ASSETS = [
   './icons/apple-touch-icon.png'
 ];
 
+// Bibliotecas externas con versión fija: no cambian, así que se guardan para abrir la app sin conexión
+const EXTERNAS = [
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js',
+  'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
+];
+const esExternaVersionada = (url) => EXTERNAS.includes(url);
+
 // Instalación: precachear recursos esenciales de la App Shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[ServiceWorker] Precacheando App Shell...');
-      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+      const externas = Promise.all(EXTERNAS.map((url) =>
+        fetch(new Request(url, { mode: 'no-cors' })).then((r) => cache.put(url, r)).catch(() => {})));
+      return Promise.all([cache.addAll(PRECACHE_ASSETS), externas]).catch((err) => {
         console.warn('[ServiceWorker] Advertencia al precachear algunos recursos:', err);
       });
     }).then(() => self.skipWaiting())
@@ -49,6 +61,10 @@ self.addEventListener('activate', (event) => {
 // versión) y caché primero para el resto de los recursos estáticos
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Las peticiones a otros dominios (ingreso con Google, Firestore, mapas) van directo a la red,
+  // salvo las bibliotecas con versión fija que se guardan para usar la app sin conexión
+  const url = event.request.url;
+  if (new URL(url).origin !== self.location.origin && !esExternaVersionada(url)) return;
 
   const esDocumento = event.request.mode === 'navigate' ||
     (event.request.headers.get('accept') || '').includes('text/html');
@@ -70,7 +86,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((resp) => {
-        if (resp && resp.status === 200 && resp.type === 'basic') {
+        if (resp && ((resp.status === 200 && resp.type === 'basic') || esExternaVersionada(event.request.url))) {
           const copia = resp.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copia));
         }

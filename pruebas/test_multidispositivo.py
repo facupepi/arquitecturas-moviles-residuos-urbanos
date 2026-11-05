@@ -26,7 +26,7 @@ def espera(pg, js, t=10000):
         return False
 
 def entrar(ctx, rol):
-    pg = ctx.new_page(); pg.goto(URL, wait_until="load"); pg.wait_for_timeout(1500)
+    pg = ctx.new_page(); pg.on("dialog", lambda d: d.accept()); pg.goto(URL, wait_until="load"); pg.wait_for_timeout(1500)
     pg.evaluate("([e, c]) => firebase.auth().signInWithEmailAndPassword(e, c)", list(ayuda_pruebas.cuenta(rol)[:2]))
     espera(pg, "!!(authFirebase && authFirebase.currentUser) && !!obtenerSesionActual()", 15000)
     return pg

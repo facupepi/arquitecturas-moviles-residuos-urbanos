@@ -90,7 +90,7 @@ CUERPO_ARRIBA = 151.35  # pt, comienzo real del cuerpo debajo del encabezado del
 CUERPO_ALTO = 841.7 - 72 - CUERPO_ARRIBA   # hasta el margen inferior (A4, 2,54 cm)
 DEPURAR = bool(os.environ.get("TP3_DEPURAR"))
 CAPTURA_ALTO_EXPANDIDA = 470  # pt, alto maximo al agrandar una captura para llenar una pagina
-ACHIQUE_MAX = 0.35      # una figura se achica hasta 35 % para no dejar media pagina vacia
+ACHIQUE_MAX = 0.20      # una figura se achica hasta 20 % para no dejar media pagina vacia (mas, y deja de leerse)
 
 # constantes de Word
 wdStyleNormal, wdStyleHeading1, wdStyleHeading2 = -1, -2, -3

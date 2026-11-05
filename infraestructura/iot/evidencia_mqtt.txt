@@ -1,0 +1,24 @@
+Prueba del circuito de sensores, 4/11/2026
+Mosquitto 2.0.18 en Docker (mosquitto.conf de esta carpeta), servicio de ingesta y simulador con paho-mqtt 2.1.0:
+  python worker_ingesta_mqtt.py --broker 127.0.0.1 --puerto 18830
+  python simulador_sensor_mqtt.py --broker 127.0.0.1 --puerto 18830 --intervalo 1 --iteraciones 5 --forzar-desborde --cortar
+
+Salida del servicio de ingesta:
+[INGESTA] Escuchando en 127.0.0.1:18830
+[INGESTA] Conectada al intermediario y suscrita a mediciones, alarmas y estado de los sensores.
+  [LECTURA] ECO-SF-001: 91.9 % de llenado, guardada en Firestore: sí
+  [ESTADO] Sensor simulador-sf-1113: conectado
+  [ALARMA] ECO-SF-001: Llenado de 80 % o más (91.9 %). La parada queda marcada como urgente en la hoja de ruta.
+  [LECTURA] ECO-SF-002: 79.8 % de llenado, guardada en Firestore: sí
+  [LECTURA] ECO-SF-003: 37.6 % de llenado, guardada en Firestore: sí
+  [LECTURA] ECO-SF-004: 84.3 % de llenado, guardada en Firestore: sí
+  [ALARMA] ECO-SF-004: Llenado de 80 % o más (84.3 %). La parada queda marcada como urgente en la hoja de ruta.
+  [LECTURA] ECO-SF-005: 34.0 % de llenado, guardada en Firestore: sí
+  [ESTADO] Sensor simulador-sf-1113: desconectado (aviso de desconexión del intermediario)
+
+Documento telemetria_contenedores/ECO-SF-001 leído después en Firestore: porcentajeLlenado 91.9, alertaDesborde true.
+
+Despliegue en un clúster kind (infraestructura/k8s/iot-mosquitto.yaml):
+  mosquitto-broker 1/1 y worker-ingesta-iot 2/2 en ejecución.
+  Cuatro lecturas publicadas con mosquitto_pub: una réplica procesó 1 y la otra 3 (suscripción compartida, sin duplicados).
+  Sin la cuenta de servicio cargada, el servicio procesa las lecturas y avisa que no puede guardarlas en Firestore.

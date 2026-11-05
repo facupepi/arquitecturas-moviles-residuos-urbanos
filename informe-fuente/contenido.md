@@ -143,14 +143,16 @@ Cloud Firestore guarda los datos porque sincroniza los cambios en tiempo real en
 - Dispositivos. Asocian cada celular que aceptó los avisos con su usuario.
 - Roles. Indican qué cuentas de Google son autoridad o cuadrilla, y solo las lee su propio titular.
 
-Los vecinos solo crean y consultan sus propias solicitudes. Las autoridades leen y modifican todo. Las cuadrillas únicamente cambian los campos propios de su tarea, como el estado de la parada y el peso. El catálogo de ecopuntos y las rutas calculadas se mantienen en la aplicación.
+Los vecinos solo crean y consultan sus propias solicitudes, y pueden cancelarlas mientras siguen pendientes.
+
+Las autoridades leen y modifican todo. Las cuadrillas únicamente cambian los campos propios de su tarea, como el estado de la parada, el peso y el lugar donde se confirmó. Cada dato que llega a la base se valida en el servidor. El catálogo de ecopuntos y las rutas calculadas se mantienen en la aplicación.
 
 ## 4.4. Algoritmo de optimización de rutas de recolección
 
 Ordenar las paradas de una cuadrilla equivale al problema del viajante, que consiste en hallar el recorrido más corto que pasa por todos los puntos. Su solución exacta es demasiado lenta para calcularse al instante con muchas paradas, por lo que se combinan dos métodos que dan buenos resultados rápidamente.
 
 - El primero parte de la base y visita siempre la parada pendiente más cercana a la posición actual.
-- El segundo revisa ese recorrido e invierte tramos mientras eso acorte la distancia total. En 1.000 conjuntos de paradas elegidas al azar dentro de la ciudad, redujo el recorrido en promedio un 5,0% con 5 paradas, un 7,1% con 8 y un 7,4% con 12, sin empeorarlo nunca.
+- El segundo revisa ese recorrido e invierte tramos mientras eso acorte la distancia total. En 1.000 conjuntos de paradas elegidas al azar dentro de la ciudad, redujo el recorrido en promedio un 4,9% con 5 paradas, un 6,2% con 8 y un 7,5% con 12, sin empeorarlo nunca.
 
 Las comparaciones usan la distancia en línea recta sobre la esfera terrestre. Una vez fijado el orden, el servicio de ruteo OSRM traza el recorrido por las calles reales de San Francisco y calcula los kilómetros que recorrerá el camión.
 
@@ -158,15 +160,16 @@ Las comparaciones usan la distancia en línea recta sobre la esfera terrestre. U
 
 Cada contenedor inteligente incorpora un microcontrolador de bajo consumo con un sensor ultrasónico, que mide qué tan lleno está, y una sonda de temperatura. La comparación de cuatro protocolos de envío llevó a elegir MQTT.
 
-MQTT desacopla a quien mide de quien consume el dato, y su cabecera mínima alarga la vida de la batería. Tres mecanismos garantizan la llegada de la información.
+MQTT desacopla a quien mide de quien consume el dato, y su cabecera mínima alarga la vida de la batería. Dos mecanismos garantizan la llegada de la información.
 
 - La entrega con confirmación asegura que el intermediario reciba cada lectura y cada alarma.
 - Un aviso de desconexión, que el intermediario publica por su cuenta, indica si un sensor deja de responder por falta de batería o de señal.
-- Un puerto adicional para navegadores permite que el panel municipal reciba los eventos sin servidores intermedios.
 
 Los canales de mensajes se organizan por contenedor y separan las mediciones periódicas, las alarmas urgentes y las órdenes del municipio, como cambiar la frecuencia de muestreo. Cada mensaje informa el identificador del contenedor, la hora, la distancia medida, el porcentaje de llenado, la temperatura y la batería.
 
-Un servicio de ingesta, alojado en el clúster junto a Mosquitto, toma las lecturas y actualiza el llenado en Firestore. Si un contenedor supera el 80%, genera una alerta prioritaria y suma su parada a la ruta de la cuadrilla. El prototipo reproduce este circuito con sensores simulados que escriben sus lecturas en la nube.
+Un servicio de ingesta, alojado en el clúster junto a Mosquitto, toma las lecturas y actualiza el llenado en Firestore. Si un contenedor llega al 80%, registra la alarma y la parada aparece como urgente en la hoja de ruta. Con dos réplicas, el intermediario reparte los mensajes entre ellas.
+
+El circuito se probó con Mosquitto y sensores simulados. El servicio guardó cada lectura en Firestore, registró las alarmas y recibió el aviso de desconexión al cortar un sensor.
 
 El siguiente cuadro resume la comparación que fundamenta la elección.
 
@@ -183,7 +186,7 @@ Epígrafe: Comparación de protocolos de comunicación para los sensores.
 
 ## 5.1. Módulo de autenticación, perfiles y control de acceso
 
-Firebase Authentication identifica a cada persona con su cuenta de Google. No existen contraseñas propias, y cada sesión recibe una credencial firmada que Cloud Firestore verifica en sus reglas de seguridad.
+Firebase Authentication identifica a cada persona con su cuenta de Google. La aplicación no maneja contraseñas propias, y cada sesión recibe una credencial firmada que Cloud Firestore verifica en sus reglas de seguridad.
 
 El rol de cada cuenta lo asigna el servidor. Las cuentas de la autoridad y de la cuadrilla figuran en una lista privada, y cualquier otra cuenta entra como vecino. Hay tres perfiles.
 
@@ -197,7 +200,7 @@ El siguiente cuadro resume lo que cada perfil puede hacer. Las reglas de segurid
 
 | Acción | Vecino | Autoridad | Cuadrilla |
 |---|---|---|---|
-| Crear y ver sus propias solicitudes | Sí | Sí | No |
+| Crear y ver sus propias solicitudes | Sí | Sí | Sí |
 | Ver las solicitudes de todos los vecinos | No | Sí | Sí |
 | Asignar paradas y despachar rutas | No | Sí | No |
 | Confirmar la recolección y cargar el peso | No | Sí | Sí |
@@ -216,7 +219,7 @@ La aplicación del vecino evita formularios largos que desalienten la participac
 - La solicitud de retiro pide la cantidad aproximada, la dirección, la ubicación en el mapa y la fecha deseada.
 - El mapa muestra los ecopuntos con su dirección, su horario de atención, los materiales que reciben y su nivel de llenado. Debajo, cada punto figura como disponible, casi lleno o lleno.
 - Una tabla informa por zona los días y horas de recolección domiciliaria, de reciclables y de retiros especiales, y resalta la zona del vecino.
-- El centro de avisos muestra el historial de pedidos con su avance y recibe en el momento las campañas municipales. Con la aplicación cerrada, los avisos llegan como notificación del teléfono.
+- El centro de avisos muestra el historial de pedidos con su avance y recibe en el momento las campañas municipales. Con la aplicación cerrada, el emisor de avisos los envía como notificación del teléfono.
 
 ## 5.3. Panel de control para autoridades municipales
 
@@ -241,21 +244,23 @@ La aplicación del recolector se diseñó para usarse con una mano y en movimien
 - Al tocar Confirmar en una parada se abre una ventana con el código, el peso y las observaciones, sin salir de la hoja de ruta.
 - El reporte de problemas se completa con dos toques y alerta de inmediato a la central.
 
-Antes de cerrar una parada, la aplicación comprueba que el código corresponda a un punto o a una solicitud existente y que el teléfono esté a menos de 35 metros del lugar. Si la distancia es mayor, pide una confirmación expresa y deja registrado que la recolección se hizo fuera del radio.
+Antes de cerrar una parada, la aplicación comprueba que el código corresponda a un punto o a una solicitud existente y que el teléfono esté a menos de 35 metros del lugar.
 
-## 5.5. Plataforma de cartografía y geolocalización
+Si la distancia es mayor o el teléfono no informa su ubicación, pide una confirmación expresa y registra en la base dónde se hizo la recolección.
 
-El mapa se construye con la biblioteca Leaflet y las teselas de Esri, que ofrecen un plano urbano nítido, sin marcas de agua ni cargos por uso. Los recorridos por calles provienen de OSRM, un servicio de ruteo abierto. Si no respondiera, el mapa mantiene el trazo en línea recta.
-
-El mapa se centra en San Francisco y distingue por color los ecopuntos, los contenedores casi llenos, los pedidos de retiro y los incidentes. Al tocar un ecopunto se ven su horario, los materiales que recibe y su llenado. Un botón centra la vista en la ubicación del teléfono.
-
-## 5.6. Capturas de la interfaz en ejecución
+## 5.5. Capturas de la interfaz en ejecución
 
 Las capturas muestran los perfiles del vecino y de la cuadrilla en el celular.
 
 [[CAPTURA:cap1_portal_ciudadano.png|Portal del vecino.]] || [[CAPTURA:cap2_mapa_ecopuntos.png|Horario y llenado de un ecopunto.]] || [[CAPTURA:cap4_app_recolector_qr.png|Hoja de ruta de la cuadrilla.]]
 
 El vecino ve solo sus propias solicitudes, con su estado y la cuadrilla asignada, y al tocar un ecopunto consulta su horario y su llenado. La cuadrilla trabaja en una sola pantalla, con el resumen del turno, las paradas en orden y el mapa de su recorrido.
+
+## 5.6. Plataforma de cartografía y geolocalización
+
+El mapa se construye con la biblioteca Leaflet y las teselas de Esri, que ofrecen un plano urbano nítido, sin marcas de agua ni cargos por uso. Los recorridos por calles provienen de OSRM, un servicio de ruteo abierto. Si no respondiera, el mapa mantiene el trazo en línea recta.
+
+El mapa se centra en San Francisco y distingue por color los ecopuntos, los contenedores casi llenos, los pedidos de retiro y los incidentes. Al tocar un ecopunto se ven su horario, los materiales que recibe y su llenado. Un botón centra la vista en la ubicación del teléfono.
 
 # 6. ESQUEMA DE ESCALABILIDAD Y MONITOREO
 
@@ -265,10 +270,9 @@ La aplicación se empaqueta en una imagen Docker mínima, basada en el servidor 
 
 | Atributo | Imagen estándar de Nginx | Imagen del proyecto | Beneficio |
 |---|---|---|---|
-| Tamaño en disco | 243 MB | 29,7 MB | Reduce un 88% la descarga y acelera el inicio de cada réplica |
+| Tamaño en disco | 243 MB | 30,2 MB | Reduce un 88% la descarga de cada réplica nueva |
 | Usuario de ejecución | Administrador del sistema | Usuario sin privilegios | Limita el daño si alguien vulnera el contenedor |
 | Contenido | Servidor genérico con configuración por defecto | Solo la aplicación y su configuración de seguridad | Reduce la superficie de ataque |
-| Tiempo hasta responder | 1,0 s | 0,8 s | Permite sumar réplicas rápidamente ante picos de uso |
 
 Epígrafe: Comparación entre la imagen estándar y la imagen del proyecto.
 
@@ -279,9 +283,9 @@ El contenedor incluye controles automáticos de salud. Uno verifica que el servi
 Kubernetes ejecuta las réplicas de la aplicación y las separa del acceso desde internet. La configuración se verificó en un clúster local con la imagen del proyecto.
 
 - La puerta de entrada del clúster, basada en Nginx, recibe el tráfico, exige conexión cifrada y limita a 50 peticiones por segundo a cada dirección para evitar abusos.
-- El servicio interno ofrece un punto de acceso estable y reparte las peticiones entre las réplicas de forma rotativa.
+- El servicio interno ofrece un punto de acceso estable y reparte las peticiones entre las réplicas.
 - La actualización progresiva agrega una réplica nueva antes de retirar la anterior, de modo que los vecinos nunca pierden el servicio durante un cambio de versión.
-- La distribución entre servidores separa las réplicas en máquinas distintas, para que la caída de una no detenga la aplicación.
+- La distribución entre servidores procura ubicar las réplicas en máquinas distintas, para que la caída de una no detenga la aplicación.
 
 El siguiente cuadro compara las opciones evaluadas para alojar el servicio.
 
@@ -318,12 +322,11 @@ Epígrafe: Respuesta del autoescalado ante una carga sostenida.
 
 ## 6.4. Observabilidad y monitoreo con Prometheus y Grafana
 
-Cada réplica incorpora un exportador que publica las métricas del servidor Nginx. Prometheus las recolecta cada 15 segundos y Grafana las presenta en un tablero.
+Cada réplica incorpora un exportador que publica las métricas del servidor Nginx. En el clúster, Prometheus las recolecta cada 15 segundos y Grafana las presenta en un tablero.
 
 - El tablero muestra las réplicas activas, las peticiones por segundo y las conexiones abiertas, con actualización cada 5 segundos.
 - Una alerta crítica se activa si una réplica deja de responder durante 30 segundos.
 - Una advertencia se activa si el tráfico supera las 200 peticiones por segundo durante un minuto o si las conexiones abiertas superan las 400.
-- Otra advertencia indica que el autoescalado llegó al máximo de 10 réplicas, para evaluar una ampliación.
 
 En la prueba local con 60 clientes durante 60 segundos, el tablero registró un pico de 456 peticiones por segundo. El tráfico superó las 200 por segundo durante menos de un minuto, por lo que la advertencia no llegó a activarse. Al detener el exportador, la alerta de caída se activó a los 45 segundos.
 
@@ -340,15 +343,15 @@ Las pruebas automáticas recorren cada perfil, comprueban la sincronización ent
 | Validación de ubicación | Navegador con ubicación simulada | Aceptación dentro de los 35 metros y confirmación expresa fuera de ellos | Aprobado |
 | Seguridad | Consultas directas a la base y emulador | Permisos de cada rol, rechazo sin sesión y asignación de roles por cuenta de Google | Aprobado |
 | Avisos push | Chrome y Firebase Cloud Messaging | Aviso recibido con la aplicación cerrada y baja del dispositivo al cerrar sesión | Aprobado |
-| Rutas | 1.000 conjuntos de paradas por tamaño | Mejora del segundo método sobre el primero | Entre 5,0% y 7,4% |
+| Rutas | 1.000 conjuntos de paradas por tamaño | Mejora del segundo método sobre el primero | Entre 4,9% y 7,5% |
 | Carga | 60 clientes durante 60 segundos | Respuesta del contenedor Docker | 432 peticiones por segundo, ninguna con error y 95% en menos de 214 ms |
 | Autoescalado | Clúster local y generadores de carga | Aumento de réplicas bajo demanda | De 2 a 10 réplicas en poco más de un minuto |
-| Calidad web | Lighthouse | Accesibilidad, buenas prácticas, buscadores y rendimiento | Accesibilidad 100, prácticas 96, buscadores 92, rendimiento 100 en escritorio y 77 en celular |
-| Sensores | Simulador de contenedores | Lecturas sincronizadas con Firestore | Aprobado |
+| Calidad web | Lighthouse | Accesibilidad, buenas prácticas, buscadores y rendimiento | Accesibilidad 100, prácticas 100, buscadores 92, rendimiento 100 en escritorio y entre 67 y 87 en celular |
+| Sensores | Mosquitto y simulador de contenedores | Lecturas guardadas en Firestore, alarmas y aviso de desconexión | Aprobado |
 
 Epígrafe: Pruebas realizadas sobre el prototipo y sus resultados.
 
-El rendimiento en celular mejoró de 36 a 77 puntos al compilar los estilos, alojar las bibliotecas en el propio sitio, reducir los íconos de 358 a 34 KB y cargar el lector de códigos solo al escanear.
+La página completa pesa 505 KB en el celular, dentro del límite de 2 megabytes. Para lograrlo se compilaron los estilos, se alojaron las bibliotecas en el propio sitio, se redujeron los íconos a 34 KB y el lector de códigos se carga solo al escanear.
 
 # 8. PROBLEMAS ENCONTRADOS Y SOLUCIONES TÉCNICAS
 
@@ -359,7 +362,8 @@ Durante la integración surgieron dificultades que exigieron ajustes en la arqui
 | El mapa se bloqueaba o mostraba marcas de agua | Los servidores comunitarios rechazaban las peticiones y otro proveedor exigía clave y superponía su marca | Cambio a las teselas de Esri y ajuste de la política de seguridad del servidor |
 | Cabeceras de seguridad ausentes en los archivos estáticos | Nginx no hereda las cabeceras en una sección que define las suyas | Repetición de las cabeceras en la sección de recursos estáticos |
 | Lectura de códigos QR lejos del contenedor | El escáner aceptaba el código sin comprobar dónde estaba el camión | Validación de la ubicación a menos de 35 metros, con confirmación expresa fuera del radio |
-| Riesgo de inyección de código en los listados | Los textos de los vecinos se insertaban en la página sin filtrar | Función que neutraliza los caracteres peligrosos antes de mostrar cualquier texto |
+| Riesgo de inyección de código en los listados | Los textos de los vecinos se insertaban en la página sin filtrar | Función que neutraliza los caracteres peligrosos y códigos limitados a letras, números y guiones |
+| Permisos demasiado amplios | El vecino podía cambiar cualquier campo de su pedido pendiente y los incidentes se leían sin sesión | Reglas que validan cada campo, limitan los cambios por perfil y exigen sesión |
 | Solicitudes que no llegaban a la nube | El ingreso con cuentas locales no creaba una identidad que las reglas aceptaran | Ingreso con Firebase Authentication y cuentas de Google |
 | Cuentas de demostración públicas | Las claves de la autoridad y de la cuadrilla estaban en el código y cualquiera podía usarlas | Roles por cuenta de Google guardados en el servidor y eliminación de las cuentas de prueba |
 | La pantalla de ingreso no aparecía | Datos viejos guardados en el navegador interrumpían el arranque | Descarte de los datos de versiones anteriores y arranque que no depende de ellos |
@@ -382,7 +386,7 @@ El siguiente cuadro relaciona cada requerimiento de la consigna con la funcional
 | Hoja de ruta, códigos QR y reportes viales | Paradas ordenadas, escaneo con validación a 35 metros y reporte de problemas en dos toques |
 | Mapeo y geolocalización | Mapa con Leaflet y Esri, ubicación del teléfono y recorridos por calles con OSRM |
 | Notificaciones para vecinos y cuadrillas | Avisos en vivo y notificaciones push que llegan con la aplicación cerrada |
-| Contenedores Docker y Kubernetes | Imagen de 29,7 MB, réplicas, servicio interno e ingreso cifrado |
+| Contenedores Docker y Kubernetes | Imagen de 30,2 MB, réplicas, servicio interno e ingreso cifrado |
 | Monitoreo y autoescalado | Prometheus, Grafana y alertas, con autoescalado de 2 a 10 réplicas comprobado bajo carga |
 
 Epígrafe: Cumplimiento de los requerimientos de la consigna.

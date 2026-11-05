@@ -47,37 +47,56 @@ service cloud.firestore {
       ) || esAutoridad();
     }
 
+    function textoCorto(v, max) {
+      return v is string && v.size() <= max;
+    }
+
     // Colección: Solicitudes de recolección de residuos (especiales y vecinales)
     match /solicitudes_residuos/{solicitudId} {
       function datosValidosCreacion() {
         let d = request.resource.data;
-        return d.keys().hasAll(['usuarioId', 'estado', 'tipoResiduo', 'direccion', 'fechaCreacion']) &&
+        return d.keys().hasAll(['solicitudId', 'usuarioId', 'estado', 'tipoResiduo', 'direccion', 'fechaCreacion']) &&
+               d.keys().hasOnly(['solicitudId', 'usuarioId', 'nombreCiudadano', 'tipoResiduo', 'subcategoria', 'cantidad',
+                                 'direccion', 'fechaSugerida', 'observaciones', 'coords', 'estado', 'fechaCreacion']) &&
+               d.solicitudId is string && d.solicitudId.matches('SOL-[A-Z0-9-]{2,24}') &&
                d.estado == 'pendiente' &&
                d.tipoResiduo in ['organico', 'plastico', 'vidrio', 'carton', 'reciclable', 'voluminoso', 'peligroso'] &&
-               d.direccion is string && d.direccion.size() > 5;
+               d.direccion is string && d.direccion.size() > 5 && d.direccion.size() <= 200 &&
+               (!('nombreCiudadano' in d) || textoCorto(d.nombreCiudadano, 120)) &&
+               (!('subcategoria' in d) || textoCorto(d.subcategoria, 120)) &&
+               (!('cantidad' in d) || textoCorto(d.cantidad, 120)) &&
+               (!('fechaSugerida' in d) || textoCorto(d.fechaSugerida, 40)) &&
+               (!('observaciones' in d) || textoCorto(d.observaciones, 500)) &&
+               (!('coords' in d) || (d.coords is list && d.coords.size() == 2));
       }
 
+      // La cuadrilla solo cambia los campos de su tarea y no reasigna el retiro
       function datosValidosRecolector() {
         let d = request.resource.data;
         return request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['estado', 'fechaRecoleccion', 'recolectorId', 'pesoRealKg', 'qrVerificado']) &&
-               d.estado in ['en_camino', 'recolectado', 'cancelado'] &&
-               (!('pesoRealKg' in d) || (d.pesoRealKg is number && d.pesoRealKg >= 0));
+                 .hasOnly(['estado', 'fechaRecoleccion', 'recolectorId', 'pesoRealKg', 'qrVerificado',
+                           'geocerca', 'distanciaM', 'observacionesRecoleccion']) &&
+               d.estado in ['en_camino', 'recolectado'] &&
+               (!('pesoRealKg' in d) || (d.pesoRealKg is number && d.pesoRealKg >= 0 && d.pesoRealKg <= 5000)) &&
+               (!('geocerca' in d) || d.geocerca in ['dentro', 'fuera', 'sin_gps']) &&
+               (!('observacionesRecoleccion' in d) || textoCorto(d.observacionesRecoleccion, 500));
       }
 
-      allow read: if esAutoridad() || esRecolector() || 
+      allow read: if esAutoridad() || esRecolector() ||
         (estaAutenticado() && resource.data.usuarioId == request.auth.uid);
-      
-      allow create: if estaAutenticado() && 
+
+      allow create: if estaAutenticado() &&
         request.resource.data.usuarioId == request.auth.uid &&
         datosValidosCreacion();
-      
+
+      // El vecino solo puede cancelar su pedido mientras sigue pendiente
       allow update: if (esPropietario(resource.data.usuarioId) &&
         resource.data.estado == 'pendiente' &&
-        request.resource.data.usuarioId == resource.data.usuarioId) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']) &&
+        request.resource.data.estado == 'cancelado') ||
         esAutoridad() ||
         (esRecolector() && datosValidosRecolector());
-      
+
       allow delete: if esAutoridad();
     }
 
@@ -85,14 +104,32 @@ service cloud.firestore {
     match /rutas_recoleccion/{rutaId} {
       allow read: if esRecolector() || esAutoridad();
       allow create, delete: if esAutoridad();
-      allow update: if esAutoridad() || esRecolector();
+      allow update: if esAutoridad() || (esRecolector() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado', 'paradasCompletadas', 'actualizado']));
     }
 
     // Colección: Incidentes y reclamos urbanos
     match /incidentes/{incidenteId} {
-      allow read: if true;
-      allow create: if estaAutenticado();
-      allow update, delete: if esAutoridad() || esRecolector();
+      function incidenteValido() {
+        let d = request.resource.data;
+        return d.keys().hasAll(['incidenteId', 'tipo', 'ubicacion', 'gravedad', 'estado', 'creadoPor']) &&
+               d.keys().hasOnly(['incidenteId', 'tipo', 'ubicacion', 'coords', 'gravedad', 'estado', 'descripcion',
+                                 'fecha', 'creadoPor', 'creadaEn']) &&
+               d.incidenteId is string && d.incidenteId.matches('INC-[A-Z0-9-]{2,24}') &&
+               textoCorto(d.tipo, 100) && textoCorto(d.ubicacion, 200) &&
+               d.gravedad in ['alta', 'media', 'baja'] && d.estado == 'abierto' &&
+               d.creadoPor == request.auth.uid &&
+               (!('descripcion' in d) || textoCorto(d.descripcion, 500)) &&
+               (!('fecha' in d) || textoCorto(d.fecha, 40)) &&
+               (!('coords' in d) || (d.coords is list && d.coords.size() == 2));
+      }
+      allow read: if estaAutenticado();
+      allow create: if estaAutenticado() && incidenteValido();
+      // La cuadrilla puede tomar o cerrar un incidente; solo la autoridad lo edita o lo borra
+      allow update: if esAutoridad() || (esRecolector() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']) &&
+        request.resource.data.estado in ['en_atencion', 'resuelto']);
+      allow delete: if esAutoridad();
     }
 
     // Colección: Notificaciones push y avisos de campañas
@@ -110,10 +147,14 @@ service cloud.firestore {
     // Colección: Dispositivos registrados para recibir push (el id del documento es el token de FCM)
     // Solo escriben quienes tienen sesión y a nombre propio; la lectura queda reservada al emisor (administración)
     match /dispositivos/{tokenId} {
-      allow create, update: if estaAutenticado() &&
-        request.resource.data.keys().hasOnly(['uid', 'rol', 'actualizado']) &&
-        request.resource.data.uid == request.auth.uid &&
-        request.resource.data.rol in ['ciudadano', 'autoridad', 'recolector'];
+      function dispositivoValido() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['uid', 'rol', 'actualizado']) && d.uid == request.auth.uid &&
+               (d.rol == 'ciudadano' || (d.rol == 'autoridad' && esAutoridad()) ||
+                (d.rol == 'recolector' && esRecolector()));
+      }
+      allow create: if estaAutenticado() && dispositivoValido();
+      allow update: if estaAutenticado() && resource.data.uid == request.auth.uid && dispositivoValido();
       allow delete: if estaAutenticado() && resource.data.uid == request.auth.uid;
       allow read: if false;
     }
@@ -129,6 +170,10 @@ service cloud.firestore {
         (!('porcentajeLlenado' in request.resource.data) ||
           (request.resource.data.porcentajeLlenado is number &&
            request.resource.data.porcentajeLlenado >= 0 && request.resource.data.porcentajeLlenado <= 100));
+      allow update: if esRecolector() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['porcentajeLlenado', 'alertaDesborde', 'ultimaActualizacion']) &&
+        request.resource.data.porcentajeLlenado is number &&
+        request.resource.data.porcentajeLlenado >= 0 && request.resource.data.porcentajeLlenado <= 15;
       allow delete: if esAutoridad();
     }
   }

@@ -855,6 +855,19 @@ def vaciar_cuerpo(doc):
     return plantilla
 
 
+def enlazar_direcciones(doc):
+    """Convierte cada dirección web del cuerpo en un enlace que se puede abrir desde el PDF."""
+    hechos = 0
+    toc_fin = doc.TablesOfContents(1).Range.End
+    for p in doc.Range(toc_fin, doc.Content.End).Paragraphs:
+        txt = p.Range.Text
+        for m in re.finditer(r"https?://[^\s]+?(?=[.,;)]?(?:\s|$))", txt):
+            ini = p.Range.Start + m.start()
+            doc.Hyperlinks.Add(Anchor=doc.Range(ini, ini + len(m.group(0))), Address=m.group(0))
+            hechos += 1
+    return hechos
+
+
 def num_vinetas_tp2():
     """numId que usan las vinetas del TP2 (numId 5 en la plantilla)."""
     with zipfile.ZipFile(TP2_DOCX) as z:
@@ -1268,6 +1281,8 @@ def main():
                 g.diagrama(b[1], b[2])
             previo = tipo
 
+        enlaces = enlazar_direcciones(doc)
+        print("Enlaces creados:", enlaces)
         doc.Save()
         doc.Close(False)
         doc = None

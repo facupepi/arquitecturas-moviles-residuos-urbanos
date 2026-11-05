@@ -227,7 +227,7 @@ Epígrafe: Permisos de cada perfil sobre los datos del sistema.
 
 La aplicación del vecino evita formularios largos que desalienten la participación y se adapta al celular.
 
-- El registro de residuos anota lo que el vecino separó en su casa, con su categoría y su cantidad en kilos, sin pedir un retiro. El portal muestra lo registrado en el mes.
+- Cada vecino puede anotar cuántos kilos de residuos separó en su casa y de qué tipo son, aunque no necesite que se los retiren. El portal le muestra el total del mes.
 - La solicitud de retiro ofrece reciclables, voluminosos y peligrosos, con subcategorías como papel y cartón, restos de poda o pilas y baterías. Pide la cantidad aproximada, la dirección, la ubicación en el mapa y la fecha deseada.
 - El mapa muestra los ecopuntos con su dirección, su horario de atención, los materiales que reciben y su llenado. Una lista indica si cada uno está disponible, casi lleno, por encima del 60%, o lleno, desde el 80%.
 - Una tabla informa por zona los días y horas de recolección domiciliaria, de reciclables y de retiros especiales, y resalta la zona del vecino.
@@ -313,7 +313,7 @@ El autoescalado ajusta la cantidad de réplicas según el uso del procesador que
 - Ante un aumento brusco, puede duplicar las réplicas cada 15 segundos para no perder velocidad de respuesta.
 - Al bajar la demanda, espera 300 segundos antes de retirar réplicas, para evitar encendidos y apagados continuos.
 
-La política se comprobó en ese clúster con seis programas que enviaban peticiones sin pausa. El uso del procesador se mide sobre lo reservado para cada réplica, por lo que puede superar el 100%.
+Estas reglas de autoescalado se probaron en ese clúster con seis programas que enviaban peticiones sin pausa. El uso del procesador se calcula sobre la parte reservada para cada réplica, por eso puede pasar del 100%.
 
 | Tiempo desde el inicio de la carga | Réplicas en funcionamiento | Uso del procesador |
 |---|---|---|

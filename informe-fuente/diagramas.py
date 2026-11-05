@@ -227,7 +227,7 @@ class Lienzo:
 
 def generar_figura_1():
     """Figura 1: arquitectura del sistema."""
-    W, H = 560, 514
+    W, H = 560, 470
     l = Lienzo(W, H)
     l.rect(0, 0, W, H, relleno=BLANCO)
     T_TIT, T_TXT = 11.0, 10.0
@@ -235,12 +235,11 @@ def generar_figura_1():
     def caja(x, y, w, h, titulo, detalle, color, fondo, icono_nom):
         l.rect(x, y, w, h, relleno=fondo, borde=color, radio=4, ancho=1.1)
         l.icono(icono_nom, x + 7, y + 7, color)
-        tit = partir(titulo, F_NEG, T_TIT, w - 32)
-        for i, lin in enumerate(tit):
-            l.texto(x + 26, y + 17 + i * 12.5, lin, F_NEG, T_TIT, TINTA)
-        y0 = y + 17 + len(tit) * 12.5 + 3
-        for i, lin in enumerate(partir(detalle, F_REG, T_TXT, w - 14)):
-            l.texto(x + 7, y0 + i * 12.0, lin, F_REG, T_TXT, TEXTO)
+        l.texto(x + 26, y + 17, titulo, F_NEG, T_TIT, TINTA)
+        lineas = partir(detalle, F_REG, T_TXT, w - 14)
+        assert 32 + (len(lineas) - 1) * 12 + 4 <= h, f"no entra el texto de {titulo}"
+        for i, lin in enumerate(lineas):
+            l.texto(x + 7, y + 32 + i * 12.0, lin, F_REG, T_TXT, TEXTO)
 
     def banda(x, y, w, h, titulo, col):
         l.rect(x, y, w, h, relleno=GRIS_COLUMNA, borde=GRIS_BORDE, radio=6)
@@ -258,43 +257,55 @@ def generar_figura_1():
             cx, cy = en or ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
             rotulo(cx, cy, txt, col)
 
-    # Clientes y servicios en la nube
-    banda(10, 10, 225, 244, "CELULARES Y NAVEGADORES", VERDE)
-    banda(325, 10, 225, 244, "SERVICIOS EN LA NUBE", NARANJA)
-    caja(18, 44, 209, 128, "Aplicación web por perfil",
-         "El vecino pide retiros y consulta ecopuntos. El municipio sigue los contenedores y despacha rutas. La cuadrilla confirma cada parada con su código.",
-         VERDE, VERDE_FONDO, 'telefono')
-    caja(18, 180, 209, 66, "Service worker", "Abre la aplicación sin señal y muestra los avisos con la aplicación cerrada.",
+    # Clientes y servicios en la nube: las cajas de la nube tienen la misma altura y cada flecha
+    # sale del centro de una de ellas
+    IZQ, DER, AN = 10, 340, 210
+    filas = [42, 86, 130, 174, 218]          # cajas de 38 de alto, separadas 6
+    banda(IZQ, 10, AN, 254, "CELULARES Y NAVEGADORES", VERDE)
+    banda(DER, 10, AN, 254, "SERVICIOS EN LA NUBE", NARANJA)
+    caja(IZQ + 8, 42, AN - 16, 126, "Aplicación web", "Un tablero por perfil.", VERDE, VERDE_FONDO, 'telefono')
+    for i, (quien, que) in enumerate((("Vecino", "pide retiros"), ("Municipio", "despacha rutas"), ("Cuadrilla", "confirma paradas"))):
+        y = 96 + i * 22
+        l.pag.draw_circle(fitz.Point(IZQ + 20, y - 3.5), 2.2, color=VERDE, fill=VERDE)
+        l.texto(IZQ + 28, y, quien, F_NEG, T_TXT, TINTA)
+        l.texto(IZQ + 28 + largo(quien + " ", F_NEG, T_TXT), y, que, F_REG, T_TXT, TEXTO)
+    caja(IZQ + 8, 174, AN - 16, 82, "Service worker", "Abre la aplicación sin señal, guarda las bibliotecas y muestra los avisos con la aplicación cerrada.",
          VERDE, VERDE_FONDO, 'carpeta')
-    ys = [42, 84, 126, 168, 210]
-    caja(333, ys[0], 209, 40, "Firebase Hosting", "Publica la aplicación.", NARANJA, NARANJA_FONDO, 'servidor')
-    caja(333, ys[1], 209, 40, "Firebase Authentication", "Ingreso con Google.", NARANJA, NARANJA_FONDO, 'escudo')
-    caja(333, ys[2], 209, 40, "Cloud Firestore", "Datos en vivo y permisos.", NARANJA, NARANJA_FONDO, 'base')
-    caja(333, ys[3], 209, 40, "Mapas Esri y OSRM", "Plano y recorridos.", NARANJA, NARANJA_FONDO, 'globo')
-    caja(333, ys[4], 209, 40, "Firebase Cloud Messaging", "Avisos a los celulares.", NARANJA, NARANJA_FONDO, 'enviar')
-    flecha((331, 62), (229, 62), NARANJA, "Publicación")
-    flecha((229, 104), (331, 104), NARANJA, "Ingreso", doble=True)
-    flecha((229, 146), (331, 146), NARANJA, "Datos en vivo", doble=True)
-    flecha((331, 188), (229, 165), NARANJA, "Mapa y rutas", discontinua=True)
-    flecha((331, 230), (229, 222), NARANJA, "Aviso push")
+    nube = [("Firebase Hosting", "Publica la aplicación.", 'servidor'),
+            ("Authentication", "Ingreso con Google.", 'escudo'),
+            ("Cloud Firestore", "Datos en vivo.", 'base'),
+            ("Esri y OSRM", "Mapa y recorridos.", 'globo'),
+            ("Cloud Messaging", "Avisos push.", 'enviar')]
+    for (tit, txt, ico), y in zip(nube, filas):
+        caja(DER + 8, y, AN - 16, 38, tit, txt, NARANJA, NARANJA_FONDO, ico)
+    xa, xb, xm = IZQ + AN - 8 + 2, DER + 8 - 2, (IZQ + AN + DER) / 2
+    flecha((xb, 61), (xa, 61), NARANJA, "Publica", en=(xm, 61))
+    flecha((xa, 105), (xb, 105), NARANJA, "Ingreso", doble=True, en=(xm, 105))
+    flecha((xa, 149), (xb, 149), NARANJA, "Datos", doble=True, en=(xm, 149))
+    flecha((xb, 193), (xa, 160), NARANJA, "Mapa", discontinua=True, en=(xm, 176))
+    flecha((xb, 237), (xa, 237), NARANJA, "Avisos", en=(xm, 237))
 
-    # Infraestructura de la aplicación
-    banda(10, 298, 292, 206, "INFRAESTRUCTURA DE LA APLICACIÓN", AZUL)
-    caja(18, 334, 130, 92, "Balanceador y Kubernetes", "Reparte el tráfico entre réplicas de la imagen Docker.", AZUL, AZUL_FONDO, 'engranaje')
-    caja(178, 334, 116, 92, "Autoescalado", "Suma réplicas al subir la demanda, de 2 a 10.", AZUL, AZUL_FONDO, 'velocimetro')
-    caja(18, 450, 276, 46, "Prometheus y Grafana", "Tablero de métricas y alertas de caída.", PURPURA, PURPURA_FONDO, 'barras')
-    flecha((83, 298), (83, 256), AZUL, "Entrega la aplicación", en=(83, 277))
-    flecha((178, 380), (150, 380), AZUL)
-    flecha((83, 426), (83, 448), PURPURA, "Métricas", en=(132, 438))
+    # Infraestructura propia del municipio (Kubernetes)
+    banda(10, 290, 270, 170, "INFRAESTRUCTURA DEL MUNICIPIO", AZUL)
+    caja(18, 324, 116, 58, "Kubernetes", "Reparte el tráfico.", AZUL, AZUL_FONDO, 'engranaje')
+    caja(158, 324, 114, 58, "Autoescalado", "De 2 a 10 réplicas.", AZUL, AZUL_FONDO, 'velocimetro')
+    caja(18, 404, 254, 48, "Prometheus y Grafana", "Métricas y alertas.", PURPURA, PURPURA_FONDO, 'barras')
+    flecha((115, 290), (115, 266), AZUL)
+    rotulo(115, 277, "Entrega la aplicación", AZUL)
+    flecha((158, 353), (136, 353), AZUL)
+    flecha((80, 382), (80, 402), PURPURA)
 
-    # Contenedores inteligentes y avisos
-    banda(318, 298, 232, 136, "SENSORES Y AVISOS", CYAN)
-    caja(326, 334, 104, 92, "Mosquitto e ingesta", "Guarda cada lectura en la nube.", CYAN, CYAN_FONDO, 'servidor')
-    caja(438, 334, 104, 92, "Emisor de avisos", "Envía las campañas.", CYAN, CYAN_FONDO, 'enviar')
-    caja(326, 458, 104, 46, "Sensores", "Miden el llenado.", CYAN, CYAN_FONDO, 'sensor')
-    flecha((378, 298), (378, 256), CYAN, "Llenado", en=(378, 277))
-    flecha((490, 298), (490, 256), CYAN, "Avisos", en=(490, 277))
-    flecha((378, 458), (378, 436), CYAN, "Lecturas MQTT", en=(470, 447))
+    # Sensores y mensajería, también en el clúster
+    banda(290, 290, 260, 104, "SENSORES Y MENSAJES", CYAN)
+    caja(298, 324, 120, 62, "Mosquitto", "Recibe y guarda las lecturas.", CYAN, CYAN_FONDO, 'servidor')
+    caja(424, 324, 118, 62, "Emisor", "Envía los avisos push.", CYAN, CYAN_FONDO, 'enviar')
+    caja(298, 412, 120, 48, "Sensores", "Miden el llenado.", CYAN, CYAN_FONDO, 'sensor')
+    flecha((358, 290), (358, 266), CYAN)
+    rotulo(358, 277, "Lecturas", CYAN)
+    flecha((483, 290), (483, 266), CYAN)
+    rotulo(483, 277, "Avisos", CYAN)
+    flecha((358, 410), (358, 388), CYAN)
+    rotulo(358, 399, "MQTT cifrado", CYAN)
     l.guardar("fig1_arquitectura_residuos")
 
 

@@ -52,7 +52,7 @@ La plataforma atiende a tres actores.
 - La autoridad municipal supervisa el estado de los contenedores, reparte el trabajo entre las cuadrillas y resuelve los reclamos.
 - Las cuadrillas recorren rutas optimizadas, confirman cada parada con un código QR y reportan problemas en la calle al instante.
 
-La arquitectura suma recursos de forma automática ante picos de demanda, como los que siguen a una tormenta o a una campaña de descacharrado.
+La arquitectura suma recursos de forma automática ante picos de demanda, como los que siguen a una tormenta o a una jornada de limpieza.
 
 # 3. REQUERIMIENTOS DEL SISTEMA
 

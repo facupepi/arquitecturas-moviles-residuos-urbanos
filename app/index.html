@@ -19,7 +19,7 @@
   <link rel="preload" href="fonts/quicksand-latin.woff2" as="font" type="font/woff2" crossorigin>
 
   <!-- Estilos de Tailwind compilados (npm run estilos) -->
-  <link rel="stylesheet" href="estilos.css?v=4.26">
+  <link rel="stylesheet" href="estilos.css?v=4.27">
   <script defer src="firebase-config.js"></script>
 
   <!-- Leaflet 1.9.4 y Lucide alojados en el sitio (vendor/): sin conexiones a terceros al arrancar -->
@@ -963,7 +963,7 @@
 
   <!-- Lógica JavaScript de la Aplicación -->
   <script>
-    const STORAGE_KEY = 'SF_RESIDUOS_STATE_V8';
+    const STORAGE_KEY = 'SF_RESIDUOS_STATE_V9';
     const COORDS_SF = [-31.4290, -62.0820]; // Centro Cívico / Plaza Cívica de San Francisco (Córdoba)
 
     // Datos semilla iniciales auditados y georreferenciados en San Francisco, Córdoba
@@ -1033,7 +1033,7 @@
         { id: 'INC-SF-02', tipo: 'Contenedor dañado o roto', ubicacion: 'Parque Cincuentenario (Sector Este)', coords: [-31.4258, -62.0678], gravedad: 'media', estado: 'abierto', fecha: 'Hoy 16:15', descripcion: 'Tapa plástica partida.' },
       ],
       campanas: [
-        { id: 'CMP-01', titulo: 'Descacharrado contra el dengue', desc: 'Retiro especial de recipientes y chatarra en Barrio Hospital y Catedral este jueves.', fecha: 'Jueves 5 Nov' },
+        { id: 'CMP-01', titulo: 'Jornada de limpieza contra el dengue', desc: 'Retiro especial de recipientes y chatarra en Barrio Hospital y Catedral este jueves.', fecha: 'Jueves 5 Nov' },
         { id: 'CMP-02', titulo: 'EcoCanje en Plaza Cívica', desc: 'Acercá 5 kg de reciclables secos y llevate compost orgánico municipal.', fecha: 'Sábado 7 Nov' },
       ],
       kilosRecolectadosUsuario: 34.5
